@@ -68,6 +68,11 @@ PLACEHOLDER_MARKERS = (
     "${{",
 )
 
+VALIDATOR_RULE_LITERALS = {
+    '"BEGIN PRIVATE KEY": "private key",',
+    '"BEGIN RSA PRIVATE KEY": "private key",',
+}
+
 
 def run_git(*args: str) -> bytes:
     return subprocess.check_output(["git", *args], stderr=subprocess.DEVNULL)
@@ -90,6 +95,13 @@ def is_placeholder(line: str) -> bool:
     return any(marker in lowered for marker in PLACEHOLDER_MARKERS)
 
 
+def is_detection_rule(origin: str, line: str) -> bool:
+    return (
+        "scripts/validate_package.py" in origin
+        and line.strip() in VALIDATOR_RULE_LITERALS
+    )
+
+
 def scan_text(origin: str, data: bytes, findings: list[str]) -> None:
     if len(data) > MAX_BLOB_BYTES:
         findings.append(f"{origin}: tracked blob exceeds {MAX_BLOB_BYTES} bytes; inspect manually")
@@ -99,7 +111,11 @@ def scan_text(origin: str, data: bytes, findings: list[str]) -> None:
     text = data.decode("utf-8", errors="replace")
     for line_number, line in enumerate(text.splitlines(), start=1):
         for pattern in PATTERNS:
-            if pattern.regex.search(line) and not is_placeholder(line):
+            if (
+                pattern.regex.search(line)
+                and not is_placeholder(line)
+                and not is_detection_rule(origin, line)
+            ):
                 findings.append(f"{origin}:{line_number}: possible {pattern.name}")
 
 
