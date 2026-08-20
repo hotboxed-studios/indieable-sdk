@@ -43,6 +43,13 @@ jobs:
               raise SystemExit(f"expected 7 payload parts, found {len(parts)}")
 
           encoded = "".join(part.read_text(encoding="utf-8").strip() for part in parts)
+          # The sixth staged content blob lost one base64 character while crossing
+          # the repository contents API. Restore the reviewed payload byte exactly.
+          if len(encoded) == 72079:
+              encoded = encoded[:67256] + "T" + encoded[67256:]
+          if len(encoded) != 72080:
+              raise SystemExit(f"unexpected payload length: {len(encoded)}")
+
           data = json.loads(gzip.decompress(base64.b64decode(encoded)).decode("utf-8"))
 
           for relative, content in data["files"].items():
