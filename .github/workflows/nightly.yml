@@ -21,18 +21,28 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Require main branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "Nightly publication is restricted to main; received ${GITHUB_REF}" >&2
+            exit 1
+          fi
+
       - name: Check out complete history
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: "8.0.x"
 
@@ -52,7 +62,7 @@ jobs:
         run: python scripts/validate_package.py
 
       - name: Compile the public C# surface
-        run: dotnet build ci/CompileCheck/CompileCheck.csproj --configuration Release
+        run: dotnet build ci~/CompileCheck/CompileCheck.csproj --configuration Release
 
       - name: Build Nightly package
         run: >-
@@ -62,7 +72,7 @@ jobs:
           --output dist
 
       - name: Upload Nightly workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: indieable-sdk-${{ steps.version.outputs.version }}
           path: dist/*

@@ -25,6 +25,12 @@ namespace IndieableSdk
                 Debug.LogWarning("[Indieable] PublicGameKey is required. Indieable is disabled; the host game can continue normally.");
                 return;
             }
+            if (!IsAllowedBaseUrl(options.BaseUrl))
+            {
+                _client = null;
+                Debug.LogWarning("[Indieable] BaseUrl must use HTTPS. Plain HTTP is allowed only for loopback development URLs; Indieable is disabled.");
+                return;
+            }
             _client = new IndieableClient(options);
             var ignored = IndieableRuntime.Instance;
         }
@@ -178,6 +184,16 @@ namespace IndieableSdk
         {
             if (!RequireClient(onError)) return;
             IndieableRuntime.Instance.Run(_client.GetLeaderboard(slug, limit, offset, onSuccess, onError));
+        }
+
+        private static bool IsAllowedBaseUrl(string baseUrl)
+        {
+            var value = string.IsNullOrWhiteSpace(baseUrl) ? "https://indieable.com" : baseUrl.Trim();
+            Uri uri;
+            if (!Uri.TryCreate(value, UriKind.Absolute, out uri)) return false;
+            if (!string.IsNullOrEmpty(uri.UserInfo)) return false;
+            if (string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)) return true;
+            return string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) && uri.IsLoopback;
         }
 
         private static bool RequireClient(Action<IndieableError> onError)

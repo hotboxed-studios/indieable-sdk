@@ -10,11 +10,12 @@ import sys
 from pathlib import Path
 
 PACKAGE_NAME = "com.indieable.sdk"
-EXPECTED_PACKAGE_FILES = ["Runtime", "Samples~", "README.md", "CHANGELOG.md"]
+EXPECTED_PACKAGE_FILES = ["Runtime", "Samples~", "README.md", "CHANGELOG.md", "LICENSE.md"]
 REQUIRED_PATHS = [
     "package.json",
     "README.md",
     "CHANGELOG.md",
+    "LICENSE.md",
     "Runtime/Indieable.Runtime.asmdef",
     "Runtime/Indieable.cs",
     "Runtime/IndieableClient.cs",
@@ -98,6 +99,9 @@ def validate(root: Path) -> list[str]:
     if manifest.get("unity") != "2022.3":
         errors.append("package.json unity baseline must remain 2022.3")
 
+    if manifest.get("license") != "MIT":
+        errors.append("package.json license must be MIT")
+
     if manifest.get("files") != EXPECTED_PACKAGE_FILES:
         errors.append(
             "package.json files must be the exact public-package allowlist: "
@@ -111,6 +115,12 @@ def validate(root: Path) -> list[str]:
     for relative in REQUIRED_PATHS:
         if not (root / relative).is_file():
             errors.append(f"missing required package file: {relative}")
+
+    # Unity ignores directories whose names end in '~'. The compile harness must
+    # stay under ci~/ so a Git URL or local-disk UPM install never imports the
+    # fake UnityEngine API surface used by the zero-secret compile check.
+    if (root / "ci").exists():
+        errors.append("Unity-visible ci/ directory is forbidden; keep CI-only C# under ci~/")
 
     for path in root.rglob("*"):
         if path.is_symlink():

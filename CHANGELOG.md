@@ -7,6 +7,22 @@ The package follows Semantic Versioning. Nightly packages use the prerelease for
 
 ## [Unreleased]
 
+### Changed
+
+- Moved the compile-only Unity API stubs under `ci~/` so direct Git/local UPM installs
+  never import the fake `UnityEngine` surface.
+- Pinned GitHub Actions to reviewed commit SHAs and disabled persisted checkout
+  credentials.
+- Stable release publication is immutable and manual publishing is restricted to
+  `main`.
+- Added an MIT license to the repository and packaged SDK artifacts.
+
+### Security
+
+- Reject non-HTTPS remote `BaseUrl` values; plain HTTP remains available only for
+  loopback development endpoints.
+- Expanded secret scanning and ignored credential-file coverage.
+
 ## [0.4.0] - 2026-08-20
 
 ### Added

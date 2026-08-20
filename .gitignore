@@ -38,7 +38,12 @@ dist/
 .env
 .env.*
 !.env.example
+.netrc
+.npmrc
+credentials.json
+service-account.json
 *.pem
+*.key
 *.p12
 *.pfx
 *.jks

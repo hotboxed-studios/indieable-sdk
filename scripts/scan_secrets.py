@@ -13,6 +13,8 @@ from pathlib import Path
 MAX_BLOB_BYTES = 2_000_000
 BLOCKED_BASENAMES = {
     ".env",
+    ".netrc",
+    ".npmrc",
     "id_rsa",
     "id_ed25519",
     "credentials.json",
@@ -37,6 +39,7 @@ class SecretPattern:
 PATTERNS = [
     SecretPattern("private key", re.compile(r"BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY")),
     SecretPattern("GitHub token", re.compile(r"gh[pousr]_[A-Za-z0-9]{20,}")),
+    SecretPattern("GitHub fine-grained token", re.compile(r"github_pat_[A-Za-z0-9_]{20,}")),
     SecretPattern("AWS access key", re.compile(r"AKIA[0-9A-Z]{16}")),
     SecretPattern("Stripe secret", re.compile(r"sk_(?:live|test)_[A-Za-z0-9]{16,}")),
     SecretPattern("OpenAI-style secret", re.compile(r"sk-[A-Za-z0-9]{24,}")),
