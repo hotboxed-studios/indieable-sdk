@@ -26,6 +26,7 @@ PUBLIC_ENTRIES = (
     "Samples~.meta",
     "README.md",
     "CHANGELOG.md",
+    "LICENSE.md",
     "package.json",
 )
 
