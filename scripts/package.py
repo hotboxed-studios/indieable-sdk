@@ -19,7 +19,15 @@ from pathlib import Path
 from validate_package import SDK_VERSION_RE, VERSION_RE, validate
 
 ROOT = Path(__file__).resolve().parents[1]
-PUBLIC_ENTRIES = ("Runtime", "Samples~", "README.md", "CHANGELOG.md", "package.json")
+PUBLIC_ENTRIES = (
+    "Runtime",
+    "Runtime.meta",
+    "Samples~",
+    "Samples~.meta",
+    "README.md",
+    "CHANGELOG.md",
+    "package.json",
+)
 
 
 def git_value(*args: str) -> str:
