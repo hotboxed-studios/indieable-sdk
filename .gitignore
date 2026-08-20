@@ -1,0 +1,53 @@
+# Unity-generated project folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# IDE and generated C# project files
+.vs/
+.idea/
+.vscode/
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.opendb
+*.VC.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Package build output
+dist/
+*.tgz
+*.sha256
+*.unitypackage
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa
+id_ed25519
+
+# Python tooling
+__pycache__/
+*.py[cod]
+.venv/
+venv/
