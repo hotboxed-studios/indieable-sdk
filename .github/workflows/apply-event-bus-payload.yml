@@ -39,6 +39,9 @@ jobs:
 
           root = Path.cwd()
           parts = sorted((root / "tools").glob("_event_bus_payload.part*"))
+          if not parts:
+              print("Implementation payload has already been materialized.")
+              raise SystemExit(0)
           if len(parts) != 7:
               raise SystemExit(f"expected 7 payload parts, found {len(parts)}")
 
@@ -53,6 +56,10 @@ jobs:
           data = json.loads(gzip.decompress(base64.b64decode(encoded)).decode("utf-8"))
 
           for relative, content in data["files"].items():
+              # The workflow token cannot mutate workflow files. Those three files
+              # are applied afterward through the authenticated GitHub connector.
+              if relative.startswith(".github/workflows/"):
+                  continue
               path = root / relative
               path.parent.mkdir(parents=True, exist_ok=True)
               path.write_text(content, encoding="utf-8", newline="")
@@ -67,10 +74,6 @@ jobs:
           for part in parts:
               part.unlink()
 
-          workflow = root / ".github/workflows/apply-event-bus-payload.yml"
-          if workflow.exists():
-              workflow.unlink()
-
           tools = root / "tools"
           if tools.exists() and not any(tools.iterdir()):
               tools.rmdir()
@@ -83,5 +86,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
+          if git diff --cached --quiet; then
+            echo "No implementation changes remain to commit."
+            exit 0
+          fi
           git commit -m "feat: add event bus Unity sample and generic C# SDK"
           git push origin HEAD:feat/event-bus-unity-sample-dotnet
