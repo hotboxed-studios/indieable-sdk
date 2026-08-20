@@ -55,7 +55,7 @@ namespace UnityEngine
 
     public static class Debug
     {
-        public static bool isDebugBuild { get; set; } = true;
+        public static bool isDebugBuild { get; set; }
         public static void Log(object message) { }
         public static void LogWarning(object message) { }
     }
