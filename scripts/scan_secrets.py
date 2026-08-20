@@ -96,10 +96,11 @@ def is_placeholder(line: str) -> bool:
 
 
 def is_detection_rule(origin: str, line: str) -> bool:
-    return (
+    is_security_tool = (
         "scripts/validate_package.py" in origin
-        and line.strip() in VALIDATOR_RULE_LITERALS
+        or "scripts/scan_secrets.py" in origin
     )
+    return is_security_tool and line.strip() in VALIDATOR_RULE_LITERALS
 
 
 def scan_text(origin: str, data: bytes, findings: list[str]) -> None:
