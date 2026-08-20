@@ -1,0 +1,10 @@
+* @ConnorIllingworth
+
+# Security- and release-sensitive surfaces.
+/.github/workflows/ @ConnorIllingworth
+/scripts/ @ConnorIllingworth
+/ci~/ @ConnorIllingworth
+/Runtime/ @ConnorIllingworth
+/package.json @ConnorIllingworth
+/SECURITY.md @ConnorIllingworth
+/LICENSE.md @ConnorIllingworth
