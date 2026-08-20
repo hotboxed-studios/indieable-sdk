@@ -68,11 +68,6 @@ PLACEHOLDER_MARKERS = (
     "${{",
 )
 
-VALIDATOR_RULE_LITERALS = {
-    '"BEGIN PRIVATE KEY": "private key",',
-    '"BEGIN RSA PRIVATE KEY": "private key",',
-}
-
 
 def run_git(*args: str) -> bytes:
     return subprocess.check_output(["git", *args], stderr=subprocess.DEVNULL)
@@ -100,7 +95,10 @@ def is_detection_rule(origin: str, line: str) -> bool:
         "scripts/validate_package.py" in origin
         or "scripts/scan_secrets.py" in origin
     )
-    return is_security_tool and line.strip() in VALIDATOR_RULE_LITERALS
+    if not is_security_tool or "-----BEGIN" in line:
+        return False
+    lowered = line.lower()
+    return "begin" in lowered and "private key" in lowered
 
 
 def scan_text(origin: str, data: bytes, findings: list[str]) -> None:
