@@ -45,13 +45,18 @@ jobs:
       - name: Validate the Unity package
         run: python scripts/validate_package.py
 
-      - name: Compile the public C# surface
+      - name: Validate the UI Toolkit sample and UnityExample
+        run: python scripts/validate_examples.py
+
+      - name: Compile the public C# and UI Toolkit example surface
         run: dotnet build ci~/CompileCheck/CompileCheck.csproj --configuration Release
 
-      - name: Build Stable-form package artifact
-        run: python scripts/package.py --channel stable --output dist
+      - name: Build Stable-form package and UnityExample artifacts
+        run: |
+          python scripts/package.py --channel stable --output dist
+          python scripts/package_example.py --output dist
 
-      - name: Upload package artifact
+      - name: Upload package and UnityExample artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: indieable-sdk-${{ github.sha }}

@@ -1,0 +1,49 @@
+.example-root {
+    flex-grow: 1;
+    color: rgb(32, 31, 28);
+    background-color: rgb(244, 241, 233);
+}
+.page-scroll { flex-grow: 1; }
+.page { width: 100%; max-width: 1180px; align-self: center; padding-left: 28px; padding-right: 28px; padding-top: 30px; padding-bottom: 50px; }
+.hero, .card, .permission-dialog { background-color: rgb(255, 253, 248); border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px; border-left-color: rgb(217, 211, 198); border-right-color: rgb(217, 211, 198); border-top-color: rgb(217, 211, 198); border-bottom-color: rgb(217, 211, 198); }
+.hero { padding: 28px; margin-bottom: 18px; border-top-left-radius: 18px; border-top-right-radius: 18px; border-bottom-left-radius: 18px; border-bottom-right-radius: 18px; }
+.eyebrow { font-size: 11px; unity-font-style: bold; letter-spacing: 2px; color: rgb(205, 84, 42); margin-bottom: 8px; }
+.title { font-size: 34px; unity-font-style: bold; white-space: normal; margin-bottom: 9px; }
+.lede { font-size: 15px; white-space: normal; color: rgb(83, 79, 72); max-width: 900px; }
+.state-row, .grid-two, .button-row, .field-grid, .permission-actions { flex-direction: row; flex-wrap: wrap; }
+.state-row { margin-top: 18px; }
+.state-chip { padding-left: 11px; padding-right: 11px; padding-top: 7px; padding-bottom: 7px; margin-right: 8px; margin-bottom: 8px; border-top-left-radius: 999px; border-top-right-radius: 999px; border-bottom-left-radius: 999px; border-bottom-right-radius: 999px; background-color: rgb(235, 230, 218); font-size: 11px; }
+.state-chip-wide, .help, .fine-print, .permission-meta, .purpose-copy, .permission-footnote { white-space: normal; }
+.grid-two { margin-left: -7px; margin-right: -7px; }
+.card { flex-grow: 1; flex-basis: 480px; min-width: 340px; padding: 20px; margin: 7px; border-top-left-radius: 14px; border-top-right-radius: 14px; border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; }
+.card-title { font-size: 17px; unity-font-style: bold; margin-bottom: 9px; }
+.help { color: rgb(83, 79, 72); font-size: 13px; margin-bottom: 12px; }
+.fine-print { color: rgb(108, 103, 94); font-size: 11px; margin-top: 11px; }
+.field-grid > .unity-base-field { flex-grow: 1; flex-basis: 200px; min-width: 180px; margin-right: 8px; }
+.unity-base-field { margin-top: 5px; margin-bottom: 5px; }
+.unity-base-field__label { color: rgb(70, 67, 62); font-size: 11px; }
+.unity-base-text-field__input, .unity-base-field__input { min-height: 34px; background-color: rgb(248, 245, 238); border-top-left-radius: 7px; border-top-right-radius: 7px; border-bottom-left-radius: 7px; border-bottom-right-radius: 7px; border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px; border-left-color: rgb(207, 200, 187); border-right-color: rgb(207, 200, 187); border-top-color: rgb(207, 200, 187); border-bottom-color: rgb(207, 200, 187); padding-left: 9px; padding-right: 9px; }
+.button-row { margin-top: 10px; }
+.button-column { flex-direction: column; }
+.button { min-height: 38px; margin-right: 7px; margin-top: 4px; margin-bottom: 4px; padding-left: 14px; padding-right: 14px; background-color: rgb(238, 233, 223); color: rgb(32, 31, 28); border-top-left-radius: 8px; border-top-right-radius: 8px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px; border-left-color: rgb(199, 192, 179); border-right-color: rgb(199, 192, 179); border-top-color: rgb(199, 192, 179); border-bottom-color: rgb(199, 192, 179); unity-font-style: bold; }
+.button:hover { background-color: rgb(228, 222, 210); }
+.button-primary { color: rgb(255, 255, 255); background-color: rgb(205, 84, 42); border-left-color: rgb(184, 68, 30); border-right-color: rgb(184, 68, 30); border-top-color: rgb(184, 68, 30); border-bottom-color: rgb(184, 68, 30); }
+.button-primary:hover { background-color: rgb(184, 68, 30); }
+.button-danger { color: rgb(143, 39, 34); background-color: rgb(251, 231, 228); border-left-color: rgb(229, 169, 162); border-right-color: rgb(229, 169, 162); border-top-color: rgb(229, 169, 162); border-bottom-color: rgb(229, 169, 162); }
+.card-log { min-height: 300px; }
+.activity-log { flex-grow: 1; min-height: 230px; max-height: 340px; padding: 8px; background-color: rgb(31, 30, 28); border-top-left-radius: 9px; border-top-right-radius: 9px; border-bottom-left-radius: 9px; border-bottom-right-radius: 9px; }
+.log-line, .log-error { white-space: normal; font-size: 11px; color: rgb(235, 232, 224); margin-bottom: 6px; }
+.log-error { color: rgb(255, 168, 153); }
+.permission-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; align-items: center; justify-content: center; padding: 20px; background-color: rgba(22, 21, 20, 0.76); }
+.permission-dialog { width: 100%; max-width: 720px; max-height: 90%; padding: 24px; border-top-left-radius: 16px; border-top-right-radius: 16px; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+.permission-header { flex-direction: row; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.permission-title { font-size: 24px; unity-font-style: bold; }
+.permission-subtitle { white-space: normal; color: rgb(83, 79, 72); margin-top: 4px; }
+.icon-button { width: 38px; height: 38px; font-size: 22px; background-color: rgb(238, 233, 223); border-top-left-radius: 19px; border-top-right-radius: 19px; border-bottom-left-radius: 19px; border-bottom-right-radius: 19px; }
+.permission-meta { color: rgb(83, 79, 72); font-size: 12px; margin-bottom: 8px; }
+.permission-purpose { padding: 14px; margin-top: 10px; background-color: rgb(247, 244, 236); border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px; border-left-color: rgb(217, 211, 198); border-right-color: rgb(217, 211, 198); border-top-color: rgb(217, 211, 198); border-bottom-color: rgb(217, 211, 198); }
+.purpose-toggle { unity-font-style: bold; font-size: 14px; }
+.purpose-copy { color: rgb(83, 79, 72); font-size: 12px; margin-top: 5px; }
+.permission-footnote { color: rgb(83, 79, 72); font-size: 11px; margin-top: 12px; }
+.permission-actions { margin-top: 16px; }
+.permission-action { flex-grow: 1; min-height: 46px; }

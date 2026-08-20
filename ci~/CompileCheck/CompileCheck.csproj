@@ -10,7 +10,9 @@
 
   <ItemGroup>
     <Compile Include="UnityStubs.cs" />
+    <Compile Include="UIElementsStubs.cs" />
     <Compile Include="../../Runtime/**/*.cs" />
     <Compile Include="../../Samples~/QuickStart/**/*.cs" />
+    <Compile Include="../../Samples~/UIToolkitExample/**/*.cs" />
   </ItemGroup>
 </Project>
