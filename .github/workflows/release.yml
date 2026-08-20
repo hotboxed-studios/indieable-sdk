@@ -59,18 +59,15 @@ jobs:
             TAG="${GITHUB_REF_NAME}"
             VERSION="${TAG#v}"
           fi
-
           if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Stable releases require X.Y.Z; received ${VERSION}" >&2
             exit 1
           fi
-
           MANIFEST_VERSION="$(python -c 'import json; print(json.load(open("package.json", encoding="utf-8"))["version"])')"
           if [[ "${VERSION}" != "${MANIFEST_VERSION}" ]]; then
             echo "Tag/input ${VERSION} does not match package.json ${MANIFEST_VERSION}" >&2
             exit 1
           fi
-
           if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
             TAG_SHA="$(git rev-list -n 1 "${TAG}")"
             if [[ "${TAG_SHA}" != "${GITHUB_SHA}" ]]; then
@@ -78,7 +75,6 @@ jobs:
               exit 1
             fi
           fi
-
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
           echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
 
@@ -97,14 +93,18 @@ jobs:
       - name: Scan the tree and Git history for secrets
         run: python scripts/scan_secrets.py --history
 
-      - name: Validate the Unity package
-        run: python scripts/validate_package.py
+      - name: Validate package and UnityExample
+        run: |
+          python scripts/validate_package.py
+          python scripts/validate_examples.py
 
-      - name: Compile the public C# surface
+      - name: Compile the public C# and UI Toolkit example surface
         run: dotnet build ci~/CompileCheck/CompileCheck.csproj --configuration Release
 
-      - name: Build Stable package
-        run: python scripts/package.py --channel stable --output dist
+      - name: Build Stable package and UnityExample
+        run: |
+          python scripts/package.py --channel stable --output dist
+          python scripts/package_example.py --output dist
 
       - name: Upload release workflow artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

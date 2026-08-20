@@ -4,66 +4,71 @@ Indieable Connect is the standalone Unity Package Manager SDK for Indieable sess
 privacy-aware game-scoped identity, longitudinal gameplay telemetry, account linking,
 in-game playtest feedback, bug reports, and Community Challenges.
 
-The repository contains only the client package, samples, package validation, and
-release automation. It does not contain the Indieable application, database code,
-server credentials, provider credentials, or deployment configuration.
+This public repository contains only the client package, samples, a minimal
+`UnityExample` project, validation, and release automation. It does not contain the
+Indieable application, database code, Server Secrets, provider credentials, or
+deployment configuration.
 
 ## Release channels
 
-Indieable publishes two explicit SDK channels:
-
 | Channel | Intended use | Version form |
 |---|---|---|
-| **Stable** | Normal game development and production integration | `0.4.0` |
+| **Stable** | Normal development and production integration | `0.4.0` |
 | **Nightly** | Indieable development, early integration, and Unity testing | `0.4.0-nightly.YYYYMMDD.RUN` |
-
-Stable is produced from a matching `vX.Y.Z` tag. Nightly is a rolling prerelease built
-from `main` after every push, on a daily schedule, and on manual dispatch.
 
 - [Stable and historical releases](../../releases)
 - [Current Nightly release](../../releases/tag/nightly)
 
-Nightly is intentionally opt-in and may change without migration support.
+Nightly is explicit opt-in and may change without migration support. Stable is
+published from an immutable matching `vX.Y.Z` tag after Unity acceptance.
 
-## Install in Unity
+## Install
 
-### Download a release tarball
+Download a release `.tgz`, then use:
 
-1. Open the desired GitHub release.
-2. Download `indieable-connect-<version>.tgz`.
-3. In Unity, open **Window → Package Manager**.
-4. Click **+ → Add package from tarball…**.
-5. Select the downloaded archive.
+```text
+Window → Package Manager → + → Add package from tarball…
+```
 
-Each release also includes a SHA-256 checksum and JSON build metadata.
-
-### Install a tagged Stable version with Git
-
-In Package Manager choose **+ → Add package from git URL…** and enter:
+A public tagged Stable version can also be installed through:
 
 ```text
 https://github.com/hotboxed-studios/indieable-sdk.git#v0.4.0
 ```
 
-The public repository can be installed without GitHub credentials. Pin production
-games to a Stable tag rather than `main`.
-
-### Test current `main` with Git
-
-For pre-release Unity integration testing, use:
+For current pre-release integration testing:
 
 ```text
 https://github.com/hotboxed-studios/indieable-sdk.git#main
 ```
 
-`main` is development-only and may change. Switch to a Stable tag before shipping.
-CI-only C# stubs live under `ci~/`, which Unity ignores when the repository root is
-installed as a package.
+Pin production games to a Stable tag rather than `main`.
 
-### Test the working tree locally
+## UnityExample and UI Toolkit sample
 
-Clone this repository, then choose **+ → Add package from disk…** and select the root
-`package.json`. This is the fastest path while developing the SDK itself.
+The repository includes two ways to exercise the SDK:
+
+- **UI Toolkit Integration Lab** — importable from the package Samples tab.
+- [`UnityExample/`](UnityExample) — a complete minimal Unity 2022.3 project that
+  references the repository root through `file:../..`.
+
+The runtime dashboard covers:
+
+- local-only initialization;
+- side-effect-free privacy-manifest loading;
+- ephemeral and persistent sessions;
+- a balanced optional-permission popup;
+- gameplay telemetry and diagnostics **off by default**;
+- Preview `run_completed` test events;
+- account linking;
+- playtest feedback and bug reports;
+- Challenge listing, joining, and leaderboards;
+- local identity reset.
+
+Open `UnityExample` in Unity Hub, load
+`Assets/Scenes/IndieableExample.unity`, and enter Play Mode. The empty scene starts
+the dashboard automatically. See
+[`docs/UNITY-EXAMPLE-TESTING.md`](docs/UNITY-EXAMPLE-TESTING.md).
 
 ## Minimal setup
 
@@ -98,37 +103,25 @@ public sealed class IndieableBootstrap : MonoBehaviour
 
 `Indieable.Initialize(...)` is local and side-effect-free. It loads configuration and
 a previously permitted local Installation credential, but makes no network request.
-`Indieable.GetPrivacyManifest(...)` can also be called before `Connect()` without
-creating a session or persistent identifier.
+`Indieable.GetPrivacyManifest(...)` can be called before `Connect()` without creating
+a session or persistent identifier.
 
 ## Client credential boundary
 
-A game's **Public Game Key** is designed to ship in a game client. Everything else
-that authenticates a trusted backend must remain outside Unity.
-
-Never place any of the following in this repository, a Unity project, a build, a
-sample, a Git commit, or a release archive:
+A game's **Public Game Key** is designed to ship in a client. Never place any of the
+following in this repository, a Unity project, sample, build, commit, or release:
 
 - Indieable Server Secret
 - Supabase service-role key or database credentials
 - Steam publisher/Web API key
 - Discord webhook or bot token
 - OAuth client secret or refresh token
-- signing key, certificate, private key, or `.env` file
+- signing key, certificate, private key, captured session credential, or `.env` file
 
-The SDK receives short-lived session and Installation credentials from Indieable at
-runtime. Those values are stored only on the Player's machine through
-`IIndieableIdentityStorage`; they are not source-controlled or compiled into the
-package.
-
-Non-loopback SDK endpoints must use HTTPS. Plain HTTP is accepted only for loopback
-URLs such as local development servers, so session or Installation credentials cannot
-be sent over cleartext transport to a remote host by configuration mistake.
-
-The CI pipeline scans both the current tree and all reachable Git history for common
-secret formats. The package builder additionally uses a strict allowlist, so workflow
-files, test tooling, repository metadata, and local configuration cannot enter a
-release archive.
+Runtime session and Installation credentials are issued by Indieable and stored only
+on the Player's machine through `IIndieableIdentityStorage`. Non-loopback endpoints
+must use HTTPS. CI scans the current tree and all reachable Git history, and release
+archives use a strict allowlist.
 
 ## Identity and privacy lifecycle
 
@@ -143,34 +136,25 @@ Indieable.Connect()
   short-lived ephemeral session unless a previously permitted Installation exists
 
 Player enables telemetry or explicitly requests a persistent feature
-  server issues one random, game/environment-scoped Installation credential
+  random game/environment-scoped Installation credential is issued
   SDK stores it under Application.persistentDataPath
 ```
 
-The package never uses `SystemInfo.deviceUniqueIdentifier`, hardware serials, MAC
-addresses, advertising identifiers, or device fingerprinting. An Installation means
-one installation of one game, not one confirmed human. Games with local users or save
-slots can provide an opaque local profile reference:
+The SDK never uses `SystemInfo.deviceUniqueIdentifier`, hardware serials, MAC
+addresses, advertising identifiers, or device fingerprinting. An Installation is not
+a confirmed human. A game may supply an opaque local save/profile reference:
 
 ```csharp
 Indieable.SetLocalProfile("save-slot-2");
 ```
 
-Do not pass a name, email, Steam ID, Discord ID, or other real-world identifier as a
+Do not use a name, email, Steam ID, Discord ID, or another real-world identifier as a
 local profile reference.
 
-Optional gameplay telemetry and diagnostics are independent choices. Account linking,
-Steam, Challenges, feedback, and marketing do not grant either choice.
+## Optional permissions
 
-## Privacy preferences
-
-Open the dependency-free default UI:
-
-```csharp
-Indieable.OpenPrivacyPreferences();
-```
-
-Or use a custom UI:
+Gameplay telemetry and diagnostics are independent and **off by default**. Account
+linking, Steam, Challenges, forms, and marketing do not grant either choice.
 
 ```csharp
 Indieable.SetPrivacyPreference(
@@ -181,125 +165,74 @@ Indieable.SetPrivacyPreference(
     customUi: true);
 ```
 
-Withdrawal is enforced by the server. Resetting the local identity revokes the
-Installation and its active sessions before clearing local storage:
+The UI Toolkit example gives equal treatment to:
+
+```text
+Continue without optional data
+Allow selected
+```
+
+A prior affirmative choice may be reflected when the same Installation resumes, but
+the example never broadens it. Withdrawal is server-enforced. Resetting local identity
+revokes the Installation and active sessions before clearing storage:
 
 ```csharp
 Indieable.ResetLocalIdentity();
 ```
 
-## Test the connection
+## Test and telemetry events
 
 ```csharp
 Indieable.SendEvent(
     "indieable.connect_test",
     "{\"message\":\"Unity integration reached Indieable.\"}",
     test: true);
-```
 
-The reserved event is intended for integration testing and does not affect production
-Challenge rankings.
-
-## Gameplay telemetry
-
-```csharp
 IndieableTelemetry.Send(
     "run_completed",
     "{\"floor\":8,\"time_ms\":123000,\"deaths\":2,\"players\":3}",
     idempotencyKey: "run-8b0f3e31");
 ```
 
-Production events are accepted only when the developer has registered the exact event
-schema and the server permits the event's processing purpose. The client cannot choose
-a trusted Game Player, Installation, permission receipt, identity trust, or event
-trust.
+Production events require a registered exact schema and an allowed processing
+purpose. The backend derives Game Player, Installation, permission receipt, identity
+trust, and event trust. Ordinary telemetry should describe what happened in the game;
+use forms for freeform user submissions.
 
-Ordinary gameplay telemetry should describe what happened in the game. Use Indieable's
-separate feedback and bug-report APIs for freeform user submissions.
-
-## Account linking and Steam
+## Account linking, playtesting, and Challenges
 
 ```csharp
-Indieable.LinkAccount(link =>
-{
-    Debug.Log(link.UserCode);
-    Debug.Log(link.VerificationUrlComplete);
-});
-```
-
-Verifying an account changes future activity to the verified game-scoped Player. It
-does not silently claim ambiguous history from a shared installation.
-
-For Steam, implement `IIndieableSteamTicketProvider` in the host game using its
-existing Steam integration. The SDK has no Steamworks dependency and never needs a
-publisher key.
-
-## In-game playtesting
-
-```csharp
+Indieable.LinkAccount(link => Application.OpenURL(link.VerificationUrlComplete));
 Indieable.OpenFeedback();
 Indieable.OpenBugReport();
-```
 
-The optional runtime UI creates its own object, requires no host Canvas, and never
-changes `Time.timeScale`. Games with custom UI can call `GetFeedbackConfig`,
-`SubmitFeedback`, and `SubmitBugReport` directly.
-
-## Community Challenges
-
-```csharp
-Indieable.GetChallenges(collection =>
-{
-    foreach (var challenge in collection.Joined)
-        Debug.Log(challenge.Name);
-});
-
+Indieable.GetChallenges(collection => Debug.Log(collection.Joined.Length));
 Indieable.JoinChallenge("challenge-slug");
-Indieable.GetLeaderboard("challenge-slug", leaderboard =>
-{
-    foreach (var row in leaderboard.Items)
-        Debug.Log($"#{row.Rank} {row.DisplayName} {row.BestScore}");
-});
+Indieable.GetLeaderboard("challenge-slug", board => Debug.Log(board.Total));
 ```
 
-## Samples
+Steam support uses the host game's implementation of
+`IIndieableSteamTicketProvider`; the package has no Steamworks dependency or publisher
+key. Challenge operation is a separate requested purpose, so broad gameplay telemetry
+may remain off.
 
-In Unity Package Manager, open the package's **Samples** tab and import **Quick Start**.
-Add `IndieableQuickStart` to a scene object and enter the game's Public Game Key in the
-Inspector. The sample uses a placeholder and contains no live credentials.
+## Validation and releases
 
-## Failure behavior
-
-Requests retry only bounded transient failures. Errors are returned through callbacks
-and logged as warnings by default. Indieable does not pause, quit, or fail the host
-game when the service is unavailable.
-
-## Repository validation and releases
-
-Local checks require Python 3.12 and the .NET 8 SDK:
+Local checks require Python 3.12 and .NET 8:
 
 ```bash
 python scripts/scan_secrets.py --history
 python scripts/validate_package.py
+python scripts/validate_examples.py
 dotnet build ci~/CompileCheck/CompileCheck.csproj --configuration Release
 python scripts/package.py --channel stable --output dist
+python scripts/package_example.py --output dist
 ```
 
-The compile check uses minimal Unity API stubs only to catch C# syntax and public API
-breakage in a zero-secret GitHub runner. A real Unity import and Play Mode test remains
-the release acceptance step.
-
-To create a Stable release, update `package.json` and `CHANGELOG.md`, complete the real
-Unity smoke test, then push the matching tag:
-
-```bash
-git tag v0.4.0
-git push origin v0.4.0
-```
-
-The release workflow refuses a tag whose version differs from `package.json`, refuses
-to move an existing Stable tag to a different commit, and refuses to overwrite an
-existing Stable GitHub release. Stable version identifiers are immutable.
+CI compiles the public SDK and UI Toolkit sample against a zero-secret Unity API stub.
+Nightly and Stable releases include the UPM tarball, checksums/metadata, and a
+self-contained UnityExample ZIP. A real Unity import and Play Mode test remains a
+Stable release gate.
 
 ## License
 

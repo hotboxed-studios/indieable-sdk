@@ -58,18 +58,18 @@ jobs:
       - name: Scan the tree and Git history for secrets
         run: python scripts/scan_secrets.py --history
 
-      - name: Validate the Unity package
-        run: python scripts/validate_package.py
+      - name: Validate package and UnityExample
+        run: |
+          python scripts/validate_package.py
+          python scripts/validate_examples.py
 
-      - name: Compile the public C# surface
+      - name: Compile the public C# and UI Toolkit example surface
         run: dotnet build ci~/CompileCheck/CompileCheck.csproj --configuration Release
 
-      - name: Build Nightly package
-        run: >-
-          python scripts/package.py
-          --channel nightly
-          --version "${{ steps.version.outputs.version }}"
-          --output dist
+      - name: Build Nightly package and UnityExample
+        run: |
+          python scripts/package.py --channel nightly --version "${{ steps.version.outputs.version }}" --output dist
+          python scripts/package_example.py --version "${{ steps.version.outputs.version }}" --output dist
 
       - name: Upload Nightly workflow artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -91,11 +91,11 @@ jobs:
 
           Built from commit \`${GITHUB_SHA}\` on the \`main\` branch.
 
-          Nightly is an explicit opt-in integration build. It may change without
-          migration support and still requires a real Unity import and Play Mode test.
+          Assets include the UPM tarball, checksums/metadata, and a self-contained
+          UnityExample ZIP with the UI Toolkit permission and integration dashboard.
 
-          The release archive is produced from the public package allowlist after a
-          full-history secret scan, package validation, and C# compile check.
+          Nightly is explicit opt-in and may change without migration support. A real
+          Unity import and Play Mode test remains required before Stable publication.
           EOF
 
           gh release delete nightly --cleanup-tag --yes >/dev/null 2>&1 || true

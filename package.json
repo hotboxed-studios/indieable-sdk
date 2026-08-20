@@ -30,6 +30,11 @@
       "displayName": "Quick Start",
       "description": "Initialize Indieable locally, read the privacy manifest, establish a session, choose optional telemetry, submit feedback, and query Community Challenges.",
       "path": "Samples~/QuickStart"
+    },
+    {
+      "displayName": "UI Toolkit Integration Lab",
+      "description": "Runtime UI Toolkit dashboard with balanced optional-permission prompts, Preview configuration, gameplay telemetry, playtest forms, account linking, and Community Challenge controls.",
+      "path": "Samples~/UIToolkitExample"
     }
   ]
 }
