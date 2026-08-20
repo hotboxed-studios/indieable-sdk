@@ -3,6 +3,7 @@
   "version": "0.4.0",
   "displayName": "Indieable Connect",
   "description": "Privacy-aware Unity client for Indieable sessions, game-scoped identity, account linking, gameplay telemetry, playtest feedback, bug reports, and Community Challenges.",
+  "license": "MIT",
   "unity": "2022.3",
   "documentationUrl": "https://github.com/hotboxed-studios/indieable-sdk#readme",
   "changelogUrl": "https://github.com/hotboxed-studios/indieable-sdk/blob/main/CHANGELOG.md",
@@ -17,7 +18,8 @@
     "Runtime",
     "Samples~",
     "README.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "LICENSE.md"
   ],
   "author": {
     "name": "HotBoxed Studios LLC",
