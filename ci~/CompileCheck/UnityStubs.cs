@@ -19,6 +19,11 @@ namespace UnityEngine
     public class Component : Object
     {
         public GameObject gameObject { get; } = new GameObject();
+
+        public T GetComponent<T>() where T : Component, new()
+        {
+            return new T();
+        }
     }
 
     public class Behaviour : Component
