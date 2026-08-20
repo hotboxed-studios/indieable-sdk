@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out complete history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Validate Python tooling
+        run: python -m compileall -q scripts
+
+      - name: Scan the tree and Git history for secrets
+        run: python scripts/scan_secrets.py --history
+
+      - name: Validate the Unity package
+        run: python scripts/validate_package.py
+
+      - name: Compile the public C# surface
+        run: dotnet build ci/CompileCheck/CompileCheck.csproj --configuration Release
+
+      - name: Build Stable-form package artifact
+        run: python scripts/package.py --channel stable --output dist
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: indieable-sdk-${{ github.sha }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14

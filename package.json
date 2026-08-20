@@ -1,0 +1,33 @@
+{
+  "name": "com.indieable.sdk",
+  "version": "0.4.0",
+  "displayName": "Indieable Connect",
+  "description": "Privacy-aware Unity client for Indieable sessions, game-scoped identity, account linking, gameplay telemetry, playtest feedback, bug reports, and Community Challenges.",
+  "unity": "2022.3",
+  "documentationUrl": "https://github.com/hotboxed-studios/indieable-sdk#readme",
+  "changelogUrl": "https://github.com/hotboxed-studios/indieable-sdk/blob/main/CHANGELOG.md",
+  "keywords": [
+    "indieable",
+    "telemetry",
+    "playtesting",
+    "privacy",
+    "challenges"
+  ],
+  "files": [
+    "Runtime",
+    "Samples~",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "author": {
+    "name": "HotBoxed Studios LLC",
+    "url": "https://indieable.com"
+  },
+  "samples": [
+    {
+      "displayName": "Quick Start",
+      "description": "Initialize Indieable locally, read the privacy manifest, establish a session, choose optional telemetry, submit feedback, and query Community Challenges.",
+      "path": "Samples~/QuickStart"
+    }
+  ]
+}
