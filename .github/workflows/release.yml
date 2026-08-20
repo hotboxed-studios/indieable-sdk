@@ -25,17 +25,18 @@ jobs:
 
     steps:
       - name: Check out complete history
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: "8.0.x"
 
@@ -48,6 +49,10 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
+            if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+              echo "Manual Stable publication is restricted to main; received ${GITHUB_REF}" >&2
+              exit 1
+            fi
             VERSION="${REQUESTED_VERSION}"
             TAG="v${VERSION}"
           else
@@ -66,8 +71,28 @@ jobs:
             exit 1
           fi
 
+          if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
+            TAG_SHA="$(git rev-list -n 1 "${TAG}")"
+            if [[ "${TAG_SHA}" != "${GITHUB_SHA}" ]]; then
+              echo "Existing tag ${TAG} points to ${TAG_SHA}, not ${GITHUB_SHA}; refusing to move it" >&2
+              exit 1
+            fi
+          fi
+
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
           echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: Refuse to overwrite an existing Stable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "Stable release ${RELEASE_TAG} already exists and is immutable." >&2
+            exit 1
+          fi
 
       - name: Scan the tree and Git history for secrets
         run: python scripts/scan_secrets.py --history
@@ -76,13 +101,13 @@ jobs:
         run: python scripts/validate_package.py
 
       - name: Compile the public C# surface
-        run: dotnet build ci/CompileCheck/CompileCheck.csproj --configuration Release
+        run: dotnet build ci~/CompileCheck/CompileCheck.csproj --configuration Release
 
       - name: Build Stable package
         run: python scripts/package.py --channel stable --output dist
 
       - name: Upload release workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: indieable-sdk-${{ steps.version.outputs.version }}
           path: dist/*
@@ -97,11 +122,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
-            gh release upload "${RELEASE_TAG}" dist/* --clobber
-          else
-            gh release create "${RELEASE_TAG}" dist/* \
-              --target "${GITHUB_SHA}" \
-              --title "Indieable SDK ${RELEASE_VERSION}" \
-              --generate-notes
-          fi
+          gh release create "${RELEASE_TAG}" dist/* \
+            --target "${GITHUB_SHA}" \
+            --title "Indieable SDK ${RELEASE_VERSION}" \
+            --generate-notes
