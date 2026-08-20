@@ -2,7 +2,7 @@
   "name": "com.indieable.sdk",
   "version": "0.4.0",
   "displayName": "Indieable Connect",
-  "description": "Privacy-aware Unity client for Indieable sessions, game-scoped identity, account linking, gameplay telemetry, playtest feedback, bug reports, and Community Challenges.",
+  "description": "Privacy-aware Unity client for Indieable sessions, game-scoped identity, event-bus and direct gameplay telemetry, playtest feedback, bug reports, and Community Challenges.",
   "license": "MIT",
   "unity": "2022.3",
   "documentationUrl": "https://github.com/hotboxed-studios/indieable-sdk#readme",
@@ -10,6 +10,7 @@
   "keywords": [
     "indieable",
     "telemetry",
+    "event-bus",
     "playtesting",
     "privacy",
     "challenges"
@@ -32,9 +33,9 @@
       "path": "Samples~/QuickStart"
     },
     {
-      "displayName": "UI Toolkit Integration Lab",
-      "description": "Runtime UI Toolkit dashboard with balanced optional-permission prompts, Preview configuration, gameplay telemetry, playtest forms, account linking, and Community Challenge controls.",
-      "path": "Samples~/UIToolkitExample"
+      "displayName": "Event Bus Integration",
+      "description": "Importable scene, GameObjects, typed gameplay events, GlobalEventBus, routing asset, UI Toolkit permission popup, and Indieable event bridge.",
+      "path": "Samples~/EventBusIntegration"
     }
   ]
 }
