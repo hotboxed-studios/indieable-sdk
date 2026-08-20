@@ -45,8 +45,20 @@ In Package Manager choose **+ → Add package from git URL…** and enter:
 https://github.com/hotboxed-studios/indieable-sdk.git#v0.4.0
 ```
 
-For a private repository, Git must already be authenticated on the development
-machine. A downloaded tarball avoids Unity/Git credential handling.
+The public repository can be installed without GitHub credentials. Pin production
+games to a Stable tag rather than `main`.
+
+### Test current `main` with Git
+
+For pre-release Unity integration testing, use:
+
+```text
+https://github.com/hotboxed-studios/indieable-sdk.git#main
+```
+
+`main` is development-only and may change. Switch to a Stable tag before shipping.
+CI-only C# stubs live under `ci~/`, which Unity ignores when the repository root is
+installed as a package.
 
 ### Test the working tree locally
 
@@ -108,6 +120,10 @@ The SDK receives short-lived session and Installation credentials from Indieable
 runtime. Those values are stored only on the Player's machine through
 `IIndieableIdentityStorage`; they are not source-controlled or compiled into the
 package.
+
+Non-loopback SDK endpoints must use HTTPS. Plain HTTP is accepted only for loopback
+URLs such as local development servers, so session or Installation credentials cannot
+be sent over cleartext transport to a remote host by configuration mistake.
 
 The CI pipeline scans both the current tree and all reachable Git history for common
 secret formats. The package builder additionally uses a strict allowlist, so workflow
@@ -265,7 +281,7 @@ Local checks require Python 3.12 and the .NET 8 SDK:
 ```bash
 python scripts/scan_secrets.py --history
 python scripts/validate_package.py
-dotnet build ci/CompileCheck/CompileCheck.csproj --configuration Release
+dotnet build ci~/CompileCheck/CompileCheck.csproj --configuration Release
 python scripts/package.py --channel stable --output dist
 ```
 
@@ -273,12 +289,18 @@ The compile check uses minimal Unity API stubs only to catch C# syntax and publi
 breakage in a zero-secret GitHub runner. A real Unity import and Play Mode test remains
 the release acceptance step.
 
-To create a Stable release, update `package.json` and `CHANGELOG.md`, then push the
-matching tag:
+To create a Stable release, update `package.json` and `CHANGELOG.md`, complete the real
+Unity smoke test, then push the matching tag:
 
 ```bash
 git tag v0.4.0
 git push origin v0.4.0
 ```
 
-The release workflow refuses a tag whose version differs from `package.json`.
+The release workflow refuses a tag whose version differs from `package.json`, refuses
+to move an existing Stable tag to a different commit, and refuses to overwrite an
+existing Stable GitHub release. Stable version identifiers are immutable.
+
+## License
+
+Indieable Connect is available under the [MIT License](LICENSE.md).
