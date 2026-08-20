@@ -1,43 +1,47 @@
 # Changelog
 
-All notable changes to the Indieable Unity SDK are documented here.
+All notable changes to Indieable SDKs are documented here.
 
-The package follows Semantic Versioning. Nightly packages use the prerelease form
+The packages follow Semantic Versioning. Nightly artifacts use
 `X.Y.Z-nightly.YYYYMMDD.RUN` and are not stable API promises.
 
 ## [Unreleased]
 
 ### Added
 
-- Added the importable **UI Toolkit Integration Lab** sample.
-- Added a minimal `UnityExample` project that references the package root and opens
-  the integration dashboard in an empty scene.
-- Added a balanced optional-permission popup with gameplay telemetry and diagnostics
-  disabled by default.
-- Added Preview controls for `run_completed`, account linking, playtest feedback,
-  bug reports, Community Challenges, leaderboards, and local identity reset.
-- Added a complete automated/manual Unity acceptance guide.
-- Nightly and Stable releases now include a self-contained UnityExample ZIP.
+- Added an engine-agnostic, thread-safe `GameEventBus` and optional process-wide
+  `GlobalEventBus`.
+- Added `IndieableEventBusBridge` and ScriptableObject routing with Disabled,
+  AllowList, DenyList, and All selection modes.
+- Added purpose-aware client gating so gameplay telemetry and diagnostics are
+  dropped before their current permission exists.
+- Added an importable **Event Bus Integration** Unity sample containing a scene,
+  routing asset, UI Toolkit permission popup, named GameObjects, typed payloads,
+  and independent Door, Workorder, Node, Player, and Run systems.
+- Added the engine-agnostic .NET 8 `Indieable.Sdk` client and NuGet-form build
+  artifact.
+- Added a generic C# event-bus forwarder and core smoke test.
 
 ### Changed
 
-- Expanded package CI to verify UI Toolkit example synchronization, optional-purpose
-  defaults, equal permission-action treatment, and the full example project boundary.
-- Expanded the zero-secret compile harness to compile the UI Toolkit sample.
-- Moved the compile-only Unity API stubs under `ci~/` so direct Git/local UPM installs
-  never import the fake `UnityEngine` surface.
-- Pinned GitHub Actions to reviewed commit SHAs and disabled persisted checkout
-  credentials.
-- Stable release publication is immutable and manual publishing is restricted to
-  `main`.
-- Added an MIT license to the repository and packaged SDK artifacts.
+- Replaced the repository-owned standalone `UnityExample` project with the normal
+  UPM sample import workflow.
+- Release workflows now produce the Unity `.tgz` and generic `.nupkg`; they no
+  longer package a second Unity project ZIP.
+- Expanded package validation to verify the event bus, route defaults, sample
+  scene/GameObjects, safe permission defaults, and generic C# package.
+- Expanded the zero-secret compile harness to compile the Event Bus Integration
+  sample.
 
 ### Security
 
-- Optional gameplay telemetry and diagnostics are never preselected in the example.
-- Reject non-HTTPS remote `BaseUrl` values; plain HTTP remains available only for
-  loopback development endpoints.
-- Expanded secret scanning and ignored credential-file coverage.
+- The local event bus performs no serialization, storage, identity creation, or
+  network traffic.
+- Optional bus events published before permission are dropped and never replayed
+  after a later grant.
+- The sample uses an AllowList and test events by default.
+- `All` routing still cannot bypass server-side schema, purpose, identity,
+  permission, trust, or rate-limit enforcement.
 
 ## [0.4.0] - 2026-08-20
 
@@ -52,8 +56,8 @@ The package follows Semantic Versioning. Nightly packages use the prerelease for
 - In-game playtest feedback and bug-report APIs with optional runtime UI.
 - Community Challenge listing, joining, and leaderboard APIs.
 - Stable and Nightly package workflows.
-- Full-history secret scanning, strict package allowlisting, package validation, and a
-  zero-secret C# compile check.
+- Full-history secret scanning, strict package allowlisting, package validation,
+  and a zero-secret C# compile check.
 
 [Unreleased]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.4.0...HEAD
 [0.4.0]: https://github.com/hotboxed-studios/indieable-sdk/releases/tag/v0.4.0

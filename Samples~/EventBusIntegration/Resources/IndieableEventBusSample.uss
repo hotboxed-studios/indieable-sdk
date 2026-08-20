@@ -1,0 +1,217 @@
+.sample-root {
+    flex-grow: 1;
+    color: rgb(24, 24, 29);
+    background-color: rgb(233, 229, 214);
+}
+
+.sample-scroll {
+    flex-grow: 1;
+}
+
+.sample-shell {
+    width: 920px;
+    max-width: 96%;
+    align-self: center;
+    padding: 30px;
+}
+
+.eyebrow {
+    font-size: 11px;
+    unity-font-style: bold;
+    letter-spacing: 1.5px;
+    color: rgb(96, 82, 140);
+    margin-bottom: 4px;
+}
+
+.title {
+    font-size: 31px;
+    unity-font-style: bold;
+    margin-bottom: 7px;
+}
+
+.lede {
+    font-size: 15px;
+    color: rgb(76, 76, 85);
+    white-space: normal;
+    margin-bottom: 18px;
+}
+
+.status-strip {
+    flex-direction: row;
+    flex-wrap: wrap;
+    background-color: rgb(29, 29, 35);
+    border-radius: 9px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+}
+
+.status-value {
+    color: rgb(245, 243, 235);
+    font-size: 12px;
+    margin-right: 20px;
+    margin-bottom: 3px;
+}
+
+.card {
+    background-color: rgb(250, 248, 239);
+    border-width: 1px;
+    border-color: rgb(199, 194, 176);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 13px;
+}
+
+.section-title {
+    font-size: 18px;
+    unity-font-style: bold;
+    margin-bottom: 5px;
+}
+
+.section-copy {
+    font-size: 13px;
+    color: rgb(84, 84, 91);
+    white-space: normal;
+    margin-bottom: 9px;
+}
+
+.note {
+    font-size: 12px;
+    color: rgb(94, 89, 105);
+    white-space: normal;
+    margin-top: 8px;
+}
+
+.button-row,
+.button-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.button {
+    height: 36px;
+    min-width: 135px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    padding-left: 13px;
+    padding-right: 13px;
+    border-radius: 7px;
+    border-width: 1px;
+    border-color: rgb(183, 178, 162);
+    background-color: rgb(242, 239, 226);
+    color: rgb(30, 30, 35);
+    unity-font-style: bold;
+}
+
+.button:hover {
+    background-color: rgb(231, 227, 211);
+}
+
+.button.primary {
+    color: white;
+    background-color: rgb(91, 55, 174);
+    border-color: rgb(91, 55, 174);
+}
+
+.button.primary:hover {
+    background-color: rgb(76, 43, 157);
+}
+
+.button.danger {
+    color: rgb(145, 34, 42);
+    border-color: rgb(203, 130, 134);
+}
+
+.button.compact {
+    min-width: 76px;
+    height: 32px;
+}
+
+.event-button {
+    width: 154px;
+}
+
+.activity-log {
+    height: 210px;
+    background-color: rgb(26, 27, 32);
+    border-radius: 7px;
+    padding: 9px;
+}
+
+.activity-entry {
+    color: rgb(226, 224, 216);
+    font-size: 11px;
+    white-space: normal;
+    margin-bottom: 4px;
+}
+
+.activity-error {
+    color: rgb(255, 168, 168);
+}
+
+.modal-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(19, 19, 23, 0.72);
+    padding: 18px;
+}
+
+.modal-card {
+    width: 670px;
+    max-width: 96%;
+    max-height: 94%;
+    background-color: rgb(250, 248, 239);
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: rgb(183, 178, 162);
+    padding: 20px;
+}
+
+.modal-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.grow {
+    flex-grow: 1;
+}
+
+.modal-title {
+    font-size: 23px;
+    unity-font-style: bold;
+}
+
+.permission-card {
+    background-color: rgb(239, 235, 222);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+}
+
+.permission-card Toggle {
+    unity-font-style: bold;
+}
+
+.permission-copy {
+    margin-top: 5px;
+    color: rgb(78, 78, 85);
+    white-space: normal;
+    font-size: 12px;
+}
+
+.permission-actions {
+    flex-direction: row;
+    margin-top: 14px;
+}
+
+.permission-action {
+    flex-grow: 1;
+    flex-basis: 0;
+    min-width: 0;
+}

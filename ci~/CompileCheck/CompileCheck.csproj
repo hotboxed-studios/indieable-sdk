@@ -11,8 +11,9 @@
   <ItemGroup>
     <Compile Include="UnityStubs.cs" />
     <Compile Include="UIElementsStubs.cs" />
+    <Compile Include="EventBusUnityStubs.cs" />
     <Compile Include="../../Runtime/**/*.cs" />
     <Compile Include="../../Samples~/QuickStart/**/*.cs" />
-    <Compile Include="../../Samples~/UIToolkitExample/**/*.cs" />
+    <Compile Include="../../Samples~/EventBusIntegration/Scripts/**/*.cs" />
   </ItemGroup>
 </Project>

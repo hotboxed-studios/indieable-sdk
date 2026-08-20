@@ -1,0 +1,100 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="sample-root" class="sample-root">
+        <ui:ScrollView name="sample-scroll" class="sample-scroll">
+            <ui:VisualElement class="sample-shell">
+                <ui:Label text="INDIEABLE UNITY SAMPLE" class="eyebrow" />
+                <ui:Label text="Global Event Bus Integration" class="title" />
+                <ui:Label text="Game systems publish local events. The Indieable bridge subscribes, applies routing and permission policy, and forwards only configured events." class="lede" />
+
+                <ui:VisualElement class="status-strip">
+                    <ui:Label name="sdk-state" text="SDK: not initialized" class="status-value" />
+                    <ui:Label name="session-state" text="Session: none" class="status-value" />
+                    <ui:Label name="routing-state" text="Routing: loading" class="status-value" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="card">
+                    <ui:Label text="1 · Preview configuration" class="section-title" />
+                    <ui:Label text="Only the Public Game Key belongs in a client. Initialize is local; loading the notice creates no session or persistent identifier." class="section-copy" />
+                    <ui:TextField name="base-url" label="Base URL" />
+                    <ui:TextField name="public-game-key" label="Public Game Key" />
+                    <ui:TextField name="environment" label="Environment" />
+                    <ui:TextField name="local-profile" label="Opaque local profile (optional)" />
+                    <ui:VisualElement class="button-row">
+                        <ui:Button name="initialize" text="Initialize locally" class="button primary" />
+                        <ui:Button name="load-manifest" text="Load privacy notice" class="button" />
+                        <ui:Button name="connect" text="Connect session" class="button" />
+                        <ui:Button name="open-permissions" text="Review permissions" class="button" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement class="card">
+                    <ui:Label text="2 · Game systems publish local events" class="section-title" />
+                    <ui:Label text="Each button calls a different sample gameplay component. Those components know only GlobalEventBus. The bridge may forward, drop, or reject the event without changing gameplay." class="section-copy" />
+                    <ui:VisualElement class="button-grid">
+                        <ui:Button name="door-open" text="DoorOpened" class="button event-button" />
+                        <ui:Button name="workorder-done" text="WorkorderDone" class="button event-button" />
+                        <ui:Button name="node-close" text="NodeClosed" class="button event-button" />
+                        <ui:Button name="player-death" text="PlayerDied" class="button event-button" />
+                        <ui:Button name="run-floor" text="Advance floor" class="button event-button" />
+                        <ui:Button name="run-complete" text="RunCompleted" class="button event-button" />
+                    </ui:VisualElement>
+                    <ui:Label text="The sample routing asset uses an allowlist and test events by default. Events published before the relevant permission are dropped, not replayed later." class="note" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="card">
+                    <ui:Label text="3 · Direct SDK and requested features" class="section-title" />
+                    <ui:Label text="The event bus is optional. Direct SDK calls remain available for hosts that prefer them. Account linking, forms, and Challenges are separate requested features." class="section-copy" />
+                    <ui:TextField name="challenge-slug" label="Challenge slug" />
+                    <ui:VisualElement class="button-row">
+                        <ui:Button name="direct-test" text="Direct Connect test" class="button" />
+                        <ui:Button name="link-account" text="Link account" class="button" />
+                        <ui:Button name="open-feedback" text="Open feedback" class="button" />
+                        <ui:Button name="open-bug-report" text="Open bug report" class="button" />
+                        <ui:Button name="list-challenges" text="List Challenges" class="button" />
+                        <ui:Button name="join-challenge" text="Join Challenge" class="button" />
+                        <ui:Button name="reset-identity" text="Reset local identity" class="button danger" />
+                    </ui:VisualElement>
+                    <ui:Label name="challenge-state" text="No Challenge request made." class="note" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="card">
+                    <ui:Label text="Local activity" class="section-title" />
+                    <ui:Label text="Payload values, credentials, provider subjects, and emails are intentionally omitted from this sample log." class="section-copy" />
+                    <ui:ScrollView name="activity-log" class="activity-log" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+
+        <ui:VisualElement name="permission-overlay" class="modal-overlay">
+            <ui:VisualElement class="modal-card">
+                <ui:VisualElement class="modal-header">
+                    <ui:VisualElement class="grow">
+                        <ui:Label text="OPTIONAL PLAYER DATA" class="eyebrow" />
+                        <ui:Label text="Choose each purpose separately" class="modal-title" />
+                    </ui:VisualElement>
+                    <ui:Button name="permission-close" text="Close" class="button compact" />
+                </ui:VisualElement>
+
+                <ui:Label name="permission-controller" text="Controller information has not loaded." class="section-copy" />
+                <ui:Label name="permission-notice" text="Load the published notice before choosing." class="note" />
+
+                <ui:VisualElement class="permission-card">
+                    <ui:Toggle name="telemetry-toggle" label="Allow gameplay telemetry" value="false" />
+                    <ui:Label name="telemetry-description" text="Structured gameplay facts." class="permission-copy" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="permission-card">
+                    <ui:Toggle name="diagnostics-toggle" label="Allow optional diagnostics" value="false" />
+                    <ui:Label name="diagnostics-description" text="Optional technical facts." class="permission-copy" />
+                </ui:VisualElement>
+
+                <ui:Label text="Declining does not stop ordinary gameplay. Account linking, forms, Challenges, and marketing are separate decisions. Choices can be changed later." class="note" />
+
+                <ui:VisualElement class="permission-actions">
+                    <ui:Button name="permission-decline" text="Continue without optional data" class="button permission-action" />
+                    <ui:Button name="permission-save" text="Allow selected" class="button primary permission-action" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

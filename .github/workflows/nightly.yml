@@ -18,7 +18,7 @@ concurrency:
 jobs:
   build-nightly:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Require main branch
@@ -58,18 +58,29 @@ jobs:
       - name: Scan the tree and Git history for secrets
         run: python scripts/scan_secrets.py --history
 
-      - name: Validate package and UnityExample
+      - name: Validate Unity and generic C# packages
         run: |
           python scripts/validate_package.py
           python scripts/validate_examples.py
 
-      - name: Compile the public C# and UI Toolkit example surface
+      - name: Compile Unity runtime and sample
         run: dotnet build ci~/CompileCheck/CompileCheck.csproj --configuration Release
 
-      - name: Build Nightly package and UnityExample
+      - name: Build and smoke-test generic C# SDK
         run: |
-          python scripts/package.py --channel nightly --version "${{ steps.version.outputs.version }}" --output dist
-          python scripts/package_example.py --version "${{ steps.version.outputs.version }}" --output dist
+          dotnet build DotNet/Indieable.Sdk/Indieable.Sdk.csproj --configuration Release
+          dotnet run --project ci~/CoreSmoke/CoreSmoke.csproj --configuration Release
+
+      - name: Build Nightly Unity and generic C# artifacts
+        run: |
+          python scripts/package.py \
+            --channel nightly \
+            --version "${{ steps.version.outputs.version }}" \
+            --output dist
+          dotnet pack DotNet/Indieable.Sdk/Indieable.Sdk.csproj \
+            --configuration Release \
+            --output dist \
+            -p:PackageVersion="${{ steps.version.outputs.version }}"
 
       - name: Upload Nightly workflow artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -91,11 +102,18 @@ jobs:
 
           Built from commit \`${GITHUB_SHA}\` on the \`main\` branch.
 
-          Assets include the UPM tarball, checksums/metadata, and a self-contained
-          UnityExample ZIP with the UI Toolkit permission and integration dashboard.
+          Assets include:
 
-          Nightly is explicit opt-in and may change without migration support. A real
-          Unity import and Play Mode test remains required before Stable publication.
+          - the Unity Package Manager tarball and checksum/metadata;
+          - the generic .NET 8 \`Indieable.Sdk\` NuGet package.
+
+          Import the Unity **Event Bus Integration** sample from Package Manager to
+          test the scene, GameObjects, UI Toolkit permission popup, typed local
+          events, routing asset, and Indieable bridge.
+
+          Nightly is explicit opt-in and may change without migration support. Real
+          Unity import, Play Mode, and Preview acceptance remain required before
+          Stable publication.
           EOF
 
           gh release delete nightly --cleanup-tag --yes >/dev/null 2>&1 || true

@@ -17,7 +17,7 @@ concurrency:
 jobs:
   validate-package:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Check out complete history
@@ -45,18 +45,30 @@ jobs:
       - name: Validate the Unity package
         run: python scripts/validate_package.py
 
-      - name: Validate the UI Toolkit sample and UnityExample
+      - name: Validate the Unity sample and generic C# SDK
         run: python scripts/validate_examples.py
 
-      - name: Compile the public C# and UI Toolkit example surface
+      - name: Compile the Unity runtime and imported sample scripts
         run: dotnet build ci~/CompileCheck/CompileCheck.csproj --configuration Release
 
-      - name: Build Stable-form package and UnityExample artifacts
-        run: |
-          python scripts/package.py --channel stable --output dist
-          python scripts/package_example.py --output dist
+      - name: Build the generic C# SDK
+        run: dotnet build DotNet/Indieable.Sdk/Indieable.Sdk.csproj --configuration Release
 
-      - name: Upload package and UnityExample artifacts
+      - name: Run generic C# and event-bus smoke
+        run: dotnet run --project ci~/CoreSmoke/CoreSmoke.csproj --configuration Release
+
+      - name: Build Stable-form Unity and generic C# artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(python -c 'import json; print(json.load(open("package.json", encoding="utf-8"))["version"])')"
+          python scripts/package.py --channel stable --output dist
+          dotnet pack DotNet/Indieable.Sdk/Indieable.Sdk.csproj \
+            --configuration Release \
+            --output dist \
+            -p:PackageVersion="${VERSION}"
+
+      - name: Upload SDK artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: indieable-sdk-${{ github.sha }}
