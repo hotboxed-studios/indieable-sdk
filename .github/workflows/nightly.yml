@@ -18,7 +18,7 @@ concurrency:
 jobs:
   build-nightly:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Require main branch
@@ -31,18 +31,18 @@ jobs:
           fi
 
       - name: Check out complete history
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: "8.0.x"
 
@@ -58,21 +58,32 @@ jobs:
       - name: Scan the tree and Git history for secrets
         run: python scripts/scan_secrets.py --history
 
-      - name: Validate package and UnityExample
+      - name: Validate Unity and generic C# packages
         run: |
           python scripts/validate_package.py
           python scripts/validate_examples.py
 
-      - name: Compile the public C# and UI Toolkit example surface
+      - name: Compile Unity runtime and sample
         run: dotnet build ci~/CompileCheck/CompileCheck.csproj --configuration Release
 
-      - name: Build Nightly package and UnityExample
+      - name: Build and smoke-test generic C# SDK
         run: |
-          python scripts/package.py --channel nightly --version "${{ steps.version.outputs.version }}" --output dist
-          python scripts/package_example.py --version "${{ steps.version.outputs.version }}" --output dist
+          dotnet build DotNet/Indieable.Sdk/Indieable.Sdk.csproj --configuration Release
+          dotnet run --project ci~/CoreSmoke/CoreSmoke.csproj --configuration Release
+
+      - name: Build Nightly Unity and generic C# artifacts
+        run: |
+          python scripts/package.py \
+            --channel nightly \
+            --version "${{ steps.version.outputs.version }}" \
+            --output dist
+          dotnet pack DotNet/Indieable.Sdk/Indieable.Sdk.csproj \
+            --configuration Release \
+            --output dist \
+            -p:PackageVersion="${{ steps.version.outputs.version }}"
 
       - name: Upload Nightly workflow artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: indieable-sdk-${{ steps.version.outputs.version }}
           path: dist/*
@@ -91,11 +102,18 @@ jobs:
 
           Built from commit \`${GITHUB_SHA}\` on the \`main\` branch.
 
-          Assets include the UPM tarball, checksums/metadata, and a self-contained
-          UnityExample ZIP with the UI Toolkit permission and integration dashboard.
+          Assets include:
 
-          Nightly is explicit opt-in and may change without migration support. A real
-          Unity import and Play Mode test remains required before Stable publication.
+          - the Unity Package Manager tarball and checksum/metadata;
+          - the generic .NET 8 \`Indieable.Sdk\` NuGet package.
+
+          Import the Unity **Event Bus Integration** sample from Package Manager to
+          test the scene, GameObjects, UI Toolkit permission popup, typed local
+          events, routing asset, and Indieable bridge.
+
+          Nightly is explicit opt-in and may change without migration support. Real
+          Unity import, Play Mode, and Preview acceptance remain required before
+          Stable publication.
           EOF
 
           gh release delete nightly --cleanup-tag --yes >/dev/null 2>&1 || true
