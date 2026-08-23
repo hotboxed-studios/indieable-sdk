@@ -49,6 +49,11 @@ namespace IndieableSdk.EventBus
         public IndieableEventPurpose Purpose { get; internal set; }
         public bool Test { get; internal set; }
         public string IdempotencyKey { get; internal set; }
+        public int? SchemaVersion { get; internal set; }
+        public DateTime? OccurredAtUtc { get; internal set; }
+        public string TraceType { get; internal set; }
+        public string TraceId { get; internal set; }
+        public string RunId { get; internal set; }
     }
 
     [CreateAssetMenu(
@@ -155,7 +160,22 @@ namespace IndieableSdk.EventBus
                     ? configured.Purpose
                     : IndieableEventPurpose.GameplayTelemetry,
                 Test = test,
-                IdempotencyKey = idempotencyKey
+                IdempotencyKey = idempotencyKey,
+                SchemaVersion = context != null
+                    ? context.SchemaVersion
+                    : null,
+                OccurredAtUtc = context != null
+                    ? (DateTime?)context.OccurredAtUtc
+                    : envelope.PublishedAtUtc,
+                TraceType = context != null
+                    ? context.TraceType ?? ""
+                    : "",
+                TraceId = context != null
+                    ? context.TraceId ?? ""
+                    : "",
+                RunId = context != null
+                    ? context.RunId ?? ""
+                    : ""
             };
             return true;
         }

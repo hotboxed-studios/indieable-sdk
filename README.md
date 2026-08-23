@@ -17,8 +17,8 @@ credentials, or deployment configuration.
 
 | Channel | Intended use | Version form |
 |---|---|---|
-| **Stable** | Normal development and production integration | `0.4.0` |
-| **Nightly** | Indieable development, early integration, and Unity testing | `0.4.0-nightly.YYYYMMDD.RUN` |
+| **Stable** | Normal development and production integration | `0.4.1` |
+| **Nightly** | Indieable development, early integration, and Unity testing | `0.4.1-nightly.YYYYMMDD.RUN` |
 
 - [Stable and historical releases](../../releases)
 - [Current Nightly release](../../releases/tag/nightly)
@@ -37,7 +37,7 @@ Window → Package Manager → + → Add package from tarball…
 A public tagged version can also be installed through:
 
 ```text
-https://github.com/hotboxed-studios/indieable-sdk.git#v0.4.0
+https://github.com/hotboxed-studios/indieable-sdk.git#v0.4.1
 ```
 
 For current integration testing:
@@ -89,6 +89,27 @@ Indieable event keys.
 See [the sample README](Samples~/EventBusIntegration/README.md) and
 [Unity sample testing guide](docs/UNITY-SAMPLE-TESTING.md).
 
+## Configure a Unity project
+
+Open either of these equivalent entry points:
+
+```text
+Edit → Project Settings → Indieable
+Tools → Indieable → Open Settings
+```
+
+Choose **Create Indieable Project Settings** once. This explicitly creates the
+build-included project asset at
+`Assets/Resources/Indieable/IndieableProjectSettings.asset`; the SDK never
+creates or rewrites it during import, reload, or Play Mode. Configure the HTTPS
+base URL, Public Game Key, environment, optional local-profile reference,
+request policy, logging, identity recovery, and Event Bus routing asset there.
+The Public Game Key is a client credential; never enter a Server Secret.
+
+New settings use `https://preview.indieable.com` and `development`, but remain
+disabled until a Public Game Key is supplied. The imported Event Bus sample
+uses this asset when present and otherwise keeps its editable in-scene UI.
+
 ## Global event bus
 
 The event bus is optional and local-only:
@@ -103,6 +124,23 @@ GlobalEventBus.Publish(
         door_id = "dispatch-door",
         method = "interaction",
         open_count = 1
+    });
+```
+
+Correlate multiplayer observations without including platform or lobby
+identity:
+
+```csharp
+GlobalEventBus.Publish(
+    "game.run.ended",
+    payload,
+    new IndieableEventContext
+    {
+        SchemaVersion = 1,
+        RunId = sharedOpaqueRunId,
+        TraceType = "multiplayer_run",
+        TraceId = sharedOpaqueRunId,
+        IdempotencyKey = sharedOpaqueRunId + "-ended"
     });
 ```
 

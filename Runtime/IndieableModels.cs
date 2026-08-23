@@ -7,7 +7,7 @@ namespace IndieableSdk
     {
         public string BaseUrl = "https://indieable.com";
         public string PublicGameKey = "";
-        public string SdkVersion = "unity-0.4.0";
+        public string SdkVersion = "unity-0.4.1";
         public string BuildVersion = "";
         public string Platform = "";
         public string Environment = "production";
@@ -22,6 +22,22 @@ namespace IndieableSdk
         [NonSerialized] public IIndieableIdentityStorage IdentityStorage;
         [NonSerialized] public Action<bool> FeedbackVisibilityChanged;
         [NonSerialized] public Action<bool> PrivacyVisibilityChanged;
+    }
+
+    /// <summary>
+    /// Optional delivery and correlation metadata for one gameplay event.
+    /// These values never replace the session, permission, schema, or trust
+    /// checks performed by Indieable.
+    /// </summary>
+    public sealed class IndieableEventOptions
+    {
+        public bool Test;
+        public string IdempotencyKey = "";
+        public int? SchemaVersion;
+        public DateTime? OccurredAtUtc;
+        public string TraceType = "";
+        public string TraceId = "";
+        public string RunId = "";
     }
 
     public sealed class IndieableError

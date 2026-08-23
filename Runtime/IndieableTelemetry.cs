@@ -25,5 +25,20 @@ namespace IndieableSdk
                 onError,
                 idempotencyKey);
         }
+
+        public static void Send(
+            string eventKey,
+            string payloadJson,
+            IndieableEventOptions options,
+            Action onSuccess = null,
+            Action<IndieableError> onError = null)
+        {
+            Indieable.SendEvent(
+                eventKey,
+                payloadJson,
+                options,
+                onSuccess,
+                onError);
+        }
     }
 }

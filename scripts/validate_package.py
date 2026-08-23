@@ -11,8 +11,10 @@ from pathlib import Path
 
 PACKAGE_NAME = "com.indieable.sdk"
 EXPECTED_PACKAGE_FILES = [
+    "Editor",
     "Runtime",
     "Samples~",
+    "Tests",
     "README.md",
     "CHANGELOG.md",
     "LICENSE.md",
@@ -22,6 +24,8 @@ REQUIRED_PATHS = [
     "README.md",
     "CHANGELOG.md",
     "LICENSE.md",
+    "Editor/Indieable.Editor.asmdef",
+    "Editor/IndieableProjectSettingsProvider.cs",
     "Runtime/Indieable.Runtime.asmdef",
     "Runtime/Indieable.cs",
     "Runtime/IndieableClient.cs",
@@ -29,6 +33,7 @@ REQUIRED_PATHS = [
     "Runtime/IndieableIdentityStorage.cs",
     "Runtime/IndieableModels.cs",
     "Runtime/IndieablePrivacyUI.cs",
+    "Runtime/IndieableProjectSettings.cs",
     "Runtime/IndieableRuntime.cs",
     "Runtime/IndieableTelemetry.cs",
     "Runtime/Steam/IIndieableSteamTicketProvider.cs",
@@ -53,6 +58,8 @@ REQUIRED_PATHS = [
     "Samples~/EventBusIntegration/Scripts/SamplePlayerLifecycle.cs",
     "Samples~/EventBusIntegration/Scripts/SampleRunTracker.cs",
     "Samples~/EventBusIntegration/Scripts/IndieableEventBusSampleController.cs",
+    "Tests/Editor/Indieable.Tests.Editor.asmdef",
+    "Tests/Editor/IndieableEventContextTests.cs",
 ]
 VERSION_RE = re.compile(
     r"^\d+\.\d+\.\d+(?:-nightly\.\d{8}\.\d+)?$"
@@ -475,7 +482,7 @@ def validate(root: Path) -> list[str]:
             )
 
     guids: dict[str, Path] = {}
-    for package_dir_name in ("Runtime", "Samples~"):
+    for package_dir_name in ("Editor", "Runtime", "Samples~", "Tests"):
         package_dir = root / package_dir_name
         if not package_dir.exists():
             continue

@@ -20,10 +20,14 @@ from validate_package import SDK_VERSION_RE, VERSION_RE, validate
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_ENTRIES = (
+    "Editor",
+    "Editor.meta",
     "Runtime",
     "Runtime.meta",
     "Samples~",
     "Samples~.meta",
+    "Tests",
+    "Tests.meta",
     "README.md",
     "CHANGELOG.md",
     "LICENSE.md",

@@ -291,8 +291,12 @@ namespace IndieableSdk
             if (onSuccess != null) onSuccess(_session);
         }
 
-        internal IEnumerator SendEvent(string eventKey, string payloadJson, bool test,
-            string idempotencyKey, Action onSuccess, Action<IndieableError> onError)
+        internal IEnumerator SendEvent(
+            string eventKey,
+            string payloadJson,
+            IndieableEventOptions options,
+            Action onSuccess,
+            Action<IndieableError> onError)
         {
             if (!RequireSession(onError)) yield break;
             if (string.IsNullOrWhiteSpace(eventKey))
@@ -306,14 +310,61 @@ namespace IndieableSdk
                 Fail(onError, new IndieableError("invalid_event", "Event payload JSON must be an object."));
                 yield break;
             }
-            var key = string.IsNullOrWhiteSpace(idempotencyKey)
+            options = options ?? new IndieableEventOptions();
+            if (options.SchemaVersion.HasValue && options.SchemaVersion.Value <= 0)
+            {
+                Fail(onError, new IndieableError(
+                    "invalid_event",
+                    "Event schema version must be positive when supplied."));
+                yield break;
+            }
+            var key = string.IsNullOrWhiteSpace(options.IdempotencyKey)
                 ? "unity-" + Guid.NewGuid().ToString("N")
-                : idempotencyKey.Trim();
-            var body = "{\"event_key\":\"" + EscapeJson(eventKey.Trim()) + "\",\"idempotency_key\":\"" +
-                       EscapeJson(key) + "\",\"payload\":" + payload + ",\"test\":" +
-                       (test ? "true" : "false") + "}";
+                : options.IdempotencyKey.Trim();
+            var body = BuildEventRequestBody(
+                eventKey.Trim(),
+                payload,
+                key,
+                options);
             yield return SendJson("/api/connect/v1/events", body, _sessionToken,
                 delegate(string _) { if (onSuccess != null) onSuccess(); }, onError);
+        }
+
+        internal static string BuildEventRequestBody(
+            string eventKey,
+            string payloadJson,
+            string idempotencyKey,
+            IndieableEventOptions options)
+        {
+            options = options ?? new IndieableEventOptions();
+            var body = new StringBuilder()
+                .Append("{\"event_key\":\"")
+                .Append(EscapeJson(eventKey))
+                .Append("\",\"idempotency_key\":\"")
+                .Append(EscapeJson(idempotencyKey))
+                .Append("\",\"payload\":")
+                .Append(payloadJson)
+                .Append(",\"test\":")
+                .Append(options.Test ? "true" : "false");
+            if (options.SchemaVersion.HasValue)
+            {
+                body.Append(",\"schema_version\":")
+                    .Append(options.SchemaVersion.Value);
+            }
+            if (options.OccurredAtUtc.HasValue)
+            {
+                body.Append(",\"occurred_at\":\"")
+                    .Append(EscapeJson(
+                        options.OccurredAtUtc.Value
+                            .ToUniversalTime()
+                            .ToString("O")))
+                    .Append('"');
+            }
+            AppendJsonString(body, "trace_type", options.TraceType);
+            AppendJsonString(body, "trace_id", options.TraceId);
+            AppendJsonString(body, "run_id", options.RunId);
+            body.Append('}');
+            return body.ToString();
         }
 
         internal IEnumerator GetFeedbackConfig(Action<IndieableFeedbackConfig> onSuccess,

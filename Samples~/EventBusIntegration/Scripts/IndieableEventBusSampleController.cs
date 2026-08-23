@@ -211,6 +211,26 @@ namespace IndieableSdk.Samples.EventBus
         {
             if (_baseUrlField == null) return;
 
+            IndieableProjectSettings projectSettings =
+                IndieableProjectSettings.Load();
+            if (projectSettings != null)
+            {
+                baseUrl = projectSettings.BaseUrl;
+                environment = projectSettings.Environment;
+                localProfileRef = projectSettings.LocalProfileRef;
+                if (!string.IsNullOrWhiteSpace(
+                        projectSettings.PublicGameKey))
+                {
+                    publicGameKey = projectSettings.PublicGameKey;
+                }
+                if (eventBusBridge != null &&
+                    projectSettings.EventRouting != null)
+                {
+                    eventBusBridge.RoutingSettings =
+                        projectSettings.EventRouting;
+                }
+            }
+
             _baseUrlField.value = baseUrl;
             _publicGameKeyField.value = publicGameKey;
             _environmentField.value = environment;
@@ -232,7 +252,10 @@ namespace IndieableSdk.Samples.EventBus
                     Log(
                         "BUS  " + envelope.Name +
                         "  payload=" + envelope.PayloadType.Name +
-                        "  sequence=" + envelope.Sequence + ".");
+                        "  sequence=" + envelope.Sequence +
+                        (string.IsNullOrWhiteSpace(envelope.Context.RunId)
+                            ? "."
+                            : "  run=" + envelope.Context.RunId + "."));
                 });
         }
 

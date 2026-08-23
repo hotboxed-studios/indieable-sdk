@@ -72,6 +72,10 @@ namespace IndieableSdk.Samples.EventBus
             return new IndieableEventContext
             {
                 OccurredAtUtc = DateTime.UtcNow,
+                SchemaVersion = 1,
+                TraceType = "sample_run",
+                TraceId = _runId,
+                RunId = _runId,
                 IdempotencyKey = string.Format(
                     "sample-{0}-{1}-{2}",
                     operation,

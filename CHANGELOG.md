@@ -7,7 +7,17 @@ The packages follow Semantic Versioning. Nightly artifacts use
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-08-23
+
 ### Added
+
+- Added first-class Unity event options for schema version, occurrence time,
+  trace type/ID, and shared run ID, matching the generic .NET client.
+- Added explicit `Project Settings > Indieable` and
+  `Tools > Indieable > Open Settings` authoring for project-owned endpoint,
+  Public Game Key, environment, identity, retry, logging, and routing values.
+- Added focused Unity Editor tests for correlated event JSON, cloned bus
+  context, and the missing-key Preview default.
 
 - Added an engine-agnostic, thread-safe `GameEventBus` and optional process-wide
   `GlobalEventBus`.
@@ -59,5 +69,6 @@ The packages follow Semantic Versioning. Nightly artifacts use
 - Full-history secret scanning, strict package allowlisting, package validation,
   and a zero-secret C# compile check.
 
-[Unreleased]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/hotboxed-studios/indieable-sdk/releases/tag/v0.4.0

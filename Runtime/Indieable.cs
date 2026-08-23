@@ -122,9 +122,32 @@ namespace IndieableSdk
             Action onSuccess = null, Action<IndieableError> onError = null,
             string idempotencyKey = null)
         {
+            SendEvent(
+                eventKey,
+                payloadJson,
+                new IndieableEventOptions
+                {
+                    Test = test,
+                    IdempotencyKey = idempotencyKey ?? ""
+                },
+                onSuccess,
+                onError);
+        }
+
+        public static void SendEvent(
+            string eventKey,
+            string payloadJson,
+            IndieableEventOptions options,
+            Action onSuccess = null,
+            Action<IndieableError> onError = null)
+        {
             if (!RequireClient(onError)) return;
             IndieableRuntime.Instance.Run(_client.SendEvent(
-                eventKey, payloadJson, test, idempotencyKey, onSuccess, onError));
+                eventKey,
+                payloadJson,
+                options ?? new IndieableEventOptions(),
+                onSuccess,
+                onError));
         }
 
         public static void GetFeedbackConfig(Action<IndieableFeedbackConfig> onSuccess,

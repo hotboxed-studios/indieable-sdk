@@ -10,6 +10,10 @@ namespace IndieableSdk.Events
     {
         public DateTime OccurredAtUtc = DateTime.UtcNow;
         public string IdempotencyKey = "";
+        public int? SchemaVersion = null;
+        public string TraceType = "";
+        public string TraceId = "";
+        public string RunId = "";
 
         /// <summary>
         /// Null uses the bridge/routing default. True or false explicitly overrides it.
@@ -22,6 +26,10 @@ namespace IndieableSdk.Events
             {
                 OccurredAtUtc = OccurredAtUtc,
                 IdempotencyKey = IdempotencyKey ?? "",
+                SchemaVersion = SchemaVersion,
+                TraceType = TraceType ?? "",
+                TraceId = TraceId ?? "",
+                RunId = RunId ?? "",
                 Test = Test
             };
         }

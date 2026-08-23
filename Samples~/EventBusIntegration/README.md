@@ -68,7 +68,10 @@ a hidden backlog and send old activity later.
 
 ## Configure Preview
 
-1. Paste only the game's Preview **Public Game Key** into the sample UI.
+1. Either paste the game's Preview **Public Game Key** into the sample UI, or
+   create the shared project asset from
+   `Tools → Indieable → Open Settings`. The sample automatically reads that
+   asset when present and still creates all runtime UI itself.
 2. Keep `https://preview.indieable.com` and `development` for Preview testing.
 3. In Indieable, register the exact event schemas you want to test:
 
@@ -107,6 +110,10 @@ run_completed
    Connect console.
 
 Unknown, disabled, or schema-invalid event keys are still rejected server-side.
+
+Every sample gameplay event carries schema version 1 and the current sample
+Run's opaque `run_id`/trace context. Completing the Run creates a new Run ID;
+no player, platform, lobby, or device identifier is placed in the payload.
 
 ## Selection modes
 

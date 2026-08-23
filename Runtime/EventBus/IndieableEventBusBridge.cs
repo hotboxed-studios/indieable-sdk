@@ -278,7 +278,16 @@ namespace IndieableSdk.EventBus
             IndieableTelemetry.Send(
                 route.IndieableEventKey,
                 payloadJson,
-                route.Test,
+                new IndieableEventOptions
+                {
+                    Test = route.Test,
+                    IdempotencyKey = route.IdempotencyKey,
+                    SchemaVersion = route.SchemaVersion,
+                    OccurredAtUtc = route.OccurredAtUtc,
+                    TraceType = route.TraceType,
+                    TraceId = route.TraceId,
+                    RunId = route.RunId
+                },
                 delegate
                 {
                     NotifyForwarded(
@@ -292,8 +301,7 @@ namespace IndieableSdk.EventBus
                 delegate(IndieableError error)
                 {
                     NotifyFailed(envelope, error);
-                },
-                route.IdempotencyKey);
+                });
         }
 
         private void Drop(GameEventEnvelope envelope, string reason)
