@@ -11,6 +11,7 @@ namespace UnityEngine
 
     public class Object
     {
+        public string name { get; set; }
         public static void Destroy(Object target) { }
         public static void DontDestroyOnLoad(Object target) { }
         public int GetInstanceID() { return 0; }

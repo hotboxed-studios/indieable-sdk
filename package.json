@@ -1,6 +1,6 @@
 {
   "name": "com.indieable.sdk",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "displayName": "Indieable Connect",
   "description": "Privacy-aware Unity client for Indieable sessions, game-scoped identity, event-bus and direct gameplay telemetry, playtest feedback, bug reports, and Community Challenges.",
   "license": "MIT",
@@ -31,12 +31,12 @@
   "samples": [
     {
       "displayName": "Quick Start",
-      "description": "Automatic project-settings bootstrap, built-in UI Toolkit consent, in-game Player Data controls, feedback, and Community Challenges.",
+      "description": "Automatic project-settings bootstrap, themed UI Toolkit consent, in-game Player Data controls, feedback, and Community Challenges.",
       "path": "Samples~/QuickStart"
     },
     {
       "displayName": "Event Bus Integration",
-      "description": "Importable scene, automatic SDK bootstrap, built-in consent, typed gameplay events, GlobalEventBus, routing asset, and Indieable event bridge.",
+      "description": "Importable scene, automatic SDK bootstrap, editable consent/feedback UI Toolkit assets, typed gameplay events, GlobalEventBus, routing asset, and Indieable event bridge.",
       "path": "Samples~/EventBusIntegration"
     }
   ]

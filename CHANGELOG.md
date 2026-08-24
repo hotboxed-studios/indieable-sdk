@@ -7,6 +7,32 @@ The packages follow Semantic Versioning. Nightly artifacts use
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-24
+
+### Added
+
+- Added an optional `IndieableUiToolkitAssets` override containing explicit
+  runtime theme, privacy, feedback, and bug-report UXML/USS references.
+- Added editable copies of all support UI assets to the Event Bus Integration
+  sample and wired its scene to install them before the first-scene consent
+  callback.
+
+### Changed
+
+- Replaced the legacy IMGUI feedback and bug-report windows with themed UI
+  Toolkit surfaces.
+- Changed Player Data, Feedback, and Bug Report to bounded bottom-right cards
+  on transparent pick-through layers.
+- Startup consent now has no dismiss-only UI and remains until the Player saves
+  or declines; failures remain visible with a retry action.
+
+### Fixed
+
+- Assigned an explicit runtime `ThemeStyleSheet` to SDK-created panels, fixing
+  controls that rendered as unstyled white bars in Unity 6.
+- Corrected UI Toolkit font-style declarations to Unity's supported prefixed
+  USS property so imported styles compile without warnings.
+
 ## [0.5.1] - 2026-08-24
 
 ### Fixed
@@ -121,7 +147,8 @@ The packages follow Semantic Versioning. Nightly artifacts use
 - Full-history secret scanning, strict package allowlisting, package validation,
   and a zero-secret C# compile check.
 
-[Unreleased]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.4.2...v0.5.0
 [0.4.2]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.4.1...v0.4.2

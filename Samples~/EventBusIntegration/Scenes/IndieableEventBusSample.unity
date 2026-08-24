@@ -246,6 +246,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   eventBusBridge: {fileID: 1003}
+  uiToolkitAssets: {fileID: 11400000, guid: 66f2f7d638a14be79086b4db0d05cf45, type: 2}
   door: {fileID: 2202}
   workorderTerminal: {fileID: 2302}
   node: {fileID: 2402}

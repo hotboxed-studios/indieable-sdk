@@ -11,7 +11,7 @@ namespace IndieableSdk
     {
         public string BaseUrl { get; set; } = "https://indieable.com";
         public string PublicGameKey { get; set; } = "";
-        public string SdkVersion { get; set; } = "dotnet-0.5.1";
+        public string SdkVersion { get; set; } = "dotnet-0.6.0";
         public string BuildVersion { get; set; } = "";
         public string Platform { get; set; } = "";
         public string Environment { get; set; } = "production";

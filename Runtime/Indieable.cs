@@ -137,6 +137,24 @@ namespace IndieableSdk
             IndieablePrivacyUI.Open(_client);
         }
 
+        /// <summary>
+        /// Selects editable UI Toolkit assets before an SDK support surface is
+        /// opened. Imported samples call this from their first-scene Awake.
+        /// </summary>
+        public static void ConfigureUiToolkit(
+            IndieableUiToolkitAssets assets)
+        {
+            if (_privacyPreferencesVisible || _feedbackVisible)
+            {
+                Debug.LogWarning(
+                    "[Indieable] UI Toolkit assets cannot be changed while " +
+                    "an SDK support surface is visible.");
+                return;
+            }
+
+            IndieableUiToolkitFactory.Configure(assets);
+        }
+
         public static void ClosePrivacyPreferences() { IndieablePrivacyUI.Close(); }
 
         public static void RequestStartupConsent()

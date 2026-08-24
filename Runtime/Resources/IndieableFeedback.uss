@@ -1,0 +1,194 @@
+.feedback-root {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    align-items: flex-end;
+    justify-content: flex-end;
+    background-color: rgba(0, 0, 0, 0);
+    padding: 24px;
+}
+
+.feedback-card {
+    width: 500px;
+    max-width: 94%;
+    max-height: 88%;
+    color: rgb(244, 241, 232);
+    background-color: rgba(27, 27, 34, 0.98);
+    border-width: 1px;
+    border-color: rgb(92, 88, 108);
+    border-radius: 14px;
+    padding: 18px;
+}
+
+.feedback-header,
+.feedback-actions,
+.feedback-chip-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.feedback-header {
+    margin-bottom: 10px;
+}
+
+.feedback-grow {
+    flex-grow: 1;
+}
+
+.feedback-eyebrow {
+    color: rgb(188, 164, 255);
+    font-size: 11px;
+    -unity-font-style: bold;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+}
+
+.feedback-title {
+    color: rgb(250, 248, 241);
+    font-size: 22px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.feedback-scroll {
+    flex-grow: 1;
+    max-height: 650px;
+}
+
+.feedback-copy,
+.feedback-note,
+.feedback-status {
+    white-space: normal;
+}
+
+.feedback-copy {
+    color: rgb(207, 204, 215);
+    font-size: 13px;
+    margin-bottom: 7px;
+}
+
+.feedback-note {
+    color: rgb(177, 173, 191);
+    font-size: 12px;
+    margin-bottom: 10px;
+}
+
+.feedback-section-title {
+    color: rgb(235, 232, 241);
+    -unity-font-style: bold;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+.feedback-chip-row {
+    flex-wrap: wrap;
+    margin-bottom: 7px;
+}
+
+.feedback-chip {
+    min-width: 68px;
+    min-height: 34px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+    border-width: 1px;
+    border-color: rgb(82, 78, 96);
+    border-radius: 7px;
+    color: rgb(224, 221, 232);
+    background-color: rgb(43, 43, 53);
+}
+
+.feedback-chip:hover {
+    background-color: rgb(58, 57, 70);
+}
+
+.feedback-chip.is-selected {
+    color: white;
+    background-color: rgb(91, 55, 174);
+    border-color: rgb(188, 164, 255);
+}
+
+.feedback-rating {
+    min-width: 48px;
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+.feedback-input,
+.feedback-text-area,
+.feedback-toggle {
+    color: rgb(235, 232, 241);
+    margin-top: 8px;
+    margin-bottom: 7px;
+}
+
+.feedback-input .unity-base-text-field__input,
+.feedback-text-area .unity-base-text-field__input {
+    color: rgb(246, 243, 235);
+    background-color: rgb(38, 38, 47);
+    border-width: 1px;
+    border-color: rgb(78, 74, 91);
+    border-radius: 6px;
+    padding: 8px;
+}
+
+.feedback-text-area .unity-base-text-field__input {
+    min-height: 76px;
+    white-space: normal;
+}
+
+.feedback-bug-description .unity-base-text-field__input {
+    min-height: 150px;
+}
+
+.feedback-status {
+    color: rgb(188, 164, 255);
+    -unity-font-style: bold;
+    margin-top: 9px;
+}
+
+.feedback-actions {
+    flex-wrap: wrap;
+    margin-top: 14px;
+}
+
+.feedback-button {
+    min-width: 140px;
+    min-height: 38px;
+    margin-right: 8px;
+    margin-bottom: 6px;
+    padding-left: 13px;
+    padding-right: 13px;
+    border-width: 1px;
+    border-color: rgb(92, 88, 108);
+    border-radius: 7px;
+    color: rgb(244, 241, 232);
+    background-color: rgb(47, 47, 58);
+    -unity-font-style: bold;
+}
+
+.feedback-button:hover {
+    background-color: rgb(59, 58, 72);
+}
+
+.feedback-primary {
+    color: white;
+    background-color: rgb(91, 55, 174);
+    border-color: rgb(91, 55, 174);
+}
+
+.feedback-primary:hover {
+    background-color: rgb(76, 43, 157);
+}
+
+.feedback-action {
+    flex-grow: 1;
+    flex-basis: 0;
+    min-width: 0;
+}
+
+.feedback-retry {
+    margin-top: 8px;
+    align-self: flex-start;
+}

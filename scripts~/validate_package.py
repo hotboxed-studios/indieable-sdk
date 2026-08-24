@@ -41,6 +41,10 @@ REQUIRED_PATHS = [
     "Runtime/IndieableProjectSettings.cs",
     "Runtime/IndieableRuntime.cs",
     "Runtime/IndieableTelemetry.cs",
+    "Runtime/IndieableUiToolkitAssets.cs",
+    "Runtime/Resources/IndieableDefaultRuntimeTheme.tss",
+    "Runtime/Resources/IndieableFeedback.uxml",
+    "Runtime/Resources/IndieableFeedback.uss",
     "Runtime/Resources/IndieablePrivacyPreferences.uxml",
     "Runtime/Resources/IndieablePrivacyPreferences.uss",
     "Runtime/Steam/IIndieableSteamTicketProvider.cs",
@@ -53,9 +57,15 @@ REQUIRED_PATHS = [
     "Samples~/QuickStart/README.md",
     "Samples~/EventBusIntegration/README.md",
     "Samples~/EventBusIntegration/Scenes/IndieableEventBusSample.unity",
+    "Samples~/EventBusIntegration/Config/IndieableSampleUiToolkitAssets.asset",
     "Samples~/EventBusIntegration/Config/SampleEventRouting.asset",
     "Samples~/EventBusIntegration/Resources/IndieableEventBusSample.uxml",
     "Samples~/EventBusIntegration/Resources/IndieableEventBusSample.uss",
+    "Samples~/EventBusIntegration/UI/IndieableSampleDefaultRuntimeTheme.tss",
+    "Samples~/EventBusIntegration/UI/IndieableSampleFeedback.uxml",
+    "Samples~/EventBusIntegration/UI/IndieableSampleFeedback.uss",
+    "Samples~/EventBusIntegration/UI/IndieableSamplePrivacy.uxml",
+    "Samples~/EventBusIntegration/UI/IndieableSamplePrivacy.uss",
     "Samples~/EventBusIntegration/Scripts/Indieable.EventBusSample.asmdef",
     "Samples~/EventBusIntegration/Scripts/SampleEventNames.cs",
     "Samples~/EventBusIntegration/Scripts/SampleEvents.cs",
@@ -390,15 +400,102 @@ def validate(root: Path) -> list[str]:
         errors,
     )
     require_markers(
-        root / "Runtime/IndieablePrivacyUI.cs",
+        root / "Runtime/IndieableUiToolkitAssets.cs",
         (
-            "UnityEngine.UIElements",
-            "IndieablePrivacyPreferences",
-            "SaveChoices",
-            "RecordDecision",
+            "ThemeStyleSheet",
+            "IndieableDefaultRuntimeTheme",
+            "themeStyleSheet",
+            "PickingMode.Ignore",
+            "PickingMode.Position",
         ),
         errors,
     )
+    require_markers(
+        root / "Runtime/IndieablePrivacyUI.cs",
+        (
+            "UnityEngine.UIElements",
+            "IndieableUiToolkitFactory",
+            "SaveChoices",
+            "RecordDecision",
+            'Require<Button>(root, "retry")',
+        ),
+        errors,
+    )
+    require_markers(
+        root / "Runtime/IndieableFeedbackUI.cs",
+        (
+            "UnityEngine.UIElements",
+            "IndieableUiToolkitFactory",
+            'Require<Button>(root, "feedback-send")',
+            'Require<Button>(root, "feedback-cancel")',
+            'Require<Button>(root, "feedback-retry")',
+        ),
+        errors,
+    )
+
+    privacy_ui = root / "Runtime/IndieablePrivacyUI.cs"
+    feedback_ui = root / "Runtime/IndieableFeedbackUI.cs"
+    for ui_path in (privacy_ui, feedback_ui):
+        if not ui_path.is_file():
+            continue
+        ui_text = ui_path.read_text(encoding="utf-8")
+        for removed in ("void OnGUI", "GUILayout.", "GUI.ModalWindow"):
+            if removed in ui_text:
+                errors.append(
+                    f"{ui_path.name} still contains legacy IMGUI: "
+                    f"{removed}"
+                )
+
+    privacy_layout = (
+        root / "Runtime/Resources/IndieablePrivacyPreferences.uxml"
+    )
+    if privacy_layout.is_file():
+        privacy_uxml = privacy_layout.read_text(encoding="utf-8")
+        for marker in (
+            'name="privacy-card"',
+            'name="save"',
+            'name="decline"',
+            'name="retry"',
+        ):
+            if marker not in privacy_uxml:
+                errors.append(
+                    "privacy UXML missing required control: " + marker
+                )
+        if 'name="close"' in privacy_uxml:
+            errors.append(
+                "startup privacy UXML must not expose a dismiss-only Close"
+            )
+
+    feedback_layout = root / "Runtime/Resources/IndieableFeedback.uxml"
+    if feedback_layout.is_file():
+        require_markers(
+            feedback_layout,
+            (
+                'name="feedback-card"',
+                'name="feedback-form"',
+                'name="bug-form"',
+                'name="feedback-send"',
+                'name="feedback-cancel"',
+                'name="feedback-retry"',
+            ),
+            errors,
+        )
+
+    for stylesheet_name in (
+        "IndieablePrivacyPreferences.uss",
+        "IndieableFeedback.uss",
+    ):
+        stylesheet = root / "Runtime/Resources" / stylesheet_name
+        if stylesheet.is_file():
+            require_markers(
+                stylesheet,
+                (
+                    "align-items: flex-end",
+                    "justify-content: flex-end",
+                    "background-color:",
+                ),
+                errors,
+            )
 
     provider_specific_text = "\n".join(
         path.read_text(encoding="utf-8", errors="replace")
@@ -416,6 +513,11 @@ def validate(root: Path) -> list[str]:
                 "package still contains removed hosting-provider preset: "
                 + removed
             )
+    if re.search(r"(?<!-)unity-font-style", provider_specific_text):
+        errors.append(
+            "USS contains unsupported unity-font-style; use "
+            "-unity-font-style"
+        )
 
     models_path = root / "Runtime/IndieableModels.cs"
     if models_path.is_file() and version:
@@ -536,6 +638,10 @@ def validate(root: Path) -> list[str]:
                     "sample scene is missing GameObject: "
                     f"{name.removeprefix('m_Name: ')}"
                 )
+        if "uiToolkitAssets:" not in scene:
+            errors.append(
+                "sample scene does not reference its editable UI asset set"
+            )
 
     controller_path = (
         sample_scripts
@@ -549,6 +655,15 @@ def validate(root: Path) -> list[str]:
             errors.append(
                 "Event Bus sample must use SDK automatic initialization"
             )
+        for marker in (
+            "Indieable.ConfigureUiToolkit(uiToolkitAssets)",
+            "themeStyleSheet",
+        ):
+            if marker not in controller:
+                errors.append(
+                    "Event Bus sample controller missing editable UI "
+                    f"setup: {marker}"
+                )
         if (
             "SystemInfo.deviceUniqueIdentifier" in controller
             or "Time.timeScale" in controller

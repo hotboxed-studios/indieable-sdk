@@ -1,51 +1,75 @@
 using System;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace IndieableSdk
 {
-    // Small dependency-free IMGUI form. It creates its own hidden runtime object,
-    // never requires a host Canvas, and never changes Time.timeScale. Games that
-    // already have UI can bypass it and call the lower-level submission methods.
     internal sealed class IndieableFeedbackUI : MonoBehaviour
     {
+        private static readonly string[] PlayLengthKeys =
+            { "lt15", "15to30", "30to60", "1to2h", "2hplus" };
+        private static readonly string[] SeverityKeys =
+            { "minor", "major", "blocker" };
+
         private static IndieableFeedbackUI _instance;
+
         private IndieableClient _client;
+        private IndieableFeedbackConfig _config;
+        private UIDocument _document;
+        private PanelSettings _panelSettings;
+        private Label _eyebrow;
+        private Label _title;
+        private Label _description;
+        private Label _meta;
+        private Label _status;
+        private VisualElement _feedbackForm;
+        private VisualElement _bugForm;
+        private VisualElement _wishlistChoices;
+        private VisualElement _surveyQuestions;
+        private TextField _liked;
+        private TextField _confused;
+        private TextField _pitch;
+        private Toggle _includeWishlist;
+        private TextField _bugTitle;
+        private TextField _bugDescription;
+        private Button _cancel;
+        private Button _send;
+        private Button _retry;
+        private Button[] _ratingButtons;
+        private Button[] _playLengthButtons;
+        private Button[] _wishlistButtons;
+        private Button[] _severityButtons;
+        private TextField[] _answerFields = new TextField[0];
+        private int _rating;
+        private int _playLengthIndex = -1;
+        private int _severityIndex = 1;
+        private bool _wouldWishlist;
         private bool _bugMode;
+        private bool _ready;
         private bool _loading;
         private bool _submitting;
-        private bool _success;
-        private string _error = "";
-        private IndieableFeedbackConfig _config;
-        private Rect _window;
-        private Vector2 _scroll;
+        private bool _visibilityReported;
 
-        private int _rating;
-        private string _liked = "";
-        private string _confused = "";
-        private string _pitch = "";
-        private bool _includeWishlist;
-        private bool _wouldWishlist;
-        private int _playLengthIndex = -1;
-        private string[] _answers = new string[0];
-
-        private string _bugTitle = "";
-        private string _bugDescription = "";
-        private int _severityIndex = 1;
-
-        private static readonly string[] PlayLengthKeys = { "lt15", "15to30", "30to60", "1to2h", "2hplus" };
-        private static readonly string[] PlayLengthLabels = { "Under 15 min", "15–30 min", "30–60 min", "1–2 hours", "2+ hours" };
-        private static readonly string[] SeverityKeys = { "minor", "major", "blocker" };
-        private static readonly string[] SeverityLabels = { "Minor", "Major", "Blocker" };
-
-        internal static void Open(IndieableClient client, bool bugMode)
+        internal static void Open(
+            IndieableClient client,
+            bool bugMode)
         {
+            if (client == null) return;
             if (_instance == null)
             {
-                var gameObject = new GameObject("Indieable Feedback UI");
-                gameObject.hideFlags = HideFlags.HideAndDontSave;
-                DontDestroyOnLoad(gameObject);
-                _instance = gameObject.AddComponent<IndieableFeedbackUI>();
+                var host = new GameObject("Indieable Feedback UI");
+                host.hideFlags = HideFlags.HideAndDontSave;
+                DontDestroyOnLoad(host);
+                var instance = host.AddComponent<IndieableFeedbackUI>();
+                if (!instance.Initialize())
+                {
+                    Destroy(host);
+                    return;
+                }
+
+                _instance = instance;
             }
+
             _instance.Show(client, bugMode);
         }
 
@@ -59,259 +83,436 @@ namespace IndieableSdk
             _instance = null;
         }
 
-        private void Show(IndieableClient client, bool bugMode)
+        private bool Initialize()
+        {
+            if (!IndieableUiToolkitFactory.TryCreateDocument(
+                    gameObject,
+                    IndieableUiToolkitView.Feedback,
+                    32010,
+                    out _document,
+                    out _panelSettings))
+            {
+                return false;
+            }
+
+            VisualElement root = _document.rootVisualElement;
+            _eyebrow = Require<Label>(root, "feedback-eyebrow");
+            _title = Require<Label>(root, "feedback-title");
+            _description = Require<Label>(root, "feedback-description");
+            _meta = Require<Label>(root, "feedback-meta");
+            _status = Require<Label>(root, "feedback-status");
+            _feedbackForm = Require<VisualElement>(root, "feedback-form");
+            _bugForm = Require<VisualElement>(root, "bug-form");
+            _wishlistChoices =
+                Require<VisualElement>(root, "wishlist-choices");
+            _surveyQuestions =
+                Require<VisualElement>(root, "survey-questions");
+            _liked = Require<TextField>(root, "liked");
+            _confused = Require<TextField>(root, "confused");
+            _pitch = Require<TextField>(root, "pitch");
+            _includeWishlist =
+                Require<Toggle>(root, "include-wishlist");
+            _bugTitle = Require<TextField>(root, "bug-title");
+            _bugDescription =
+                Require<TextField>(root, "bug-description");
+            _cancel = Require<Button>(root, "feedback-cancel");
+            _send = Require<Button>(root, "feedback-send");
+            _retry = Require<Button>(root, "feedback-retry");
+
+            _ratingButtons = BindButtonRange(root, "rating", 5, SetRating);
+            _playLengthButtons = BindButtonRange(
+                root,
+                "play-length",
+                PlayLengthKeys.Length,
+                SetPlayLength);
+            _wishlistButtons = BindButtonRange(
+                root,
+                "wishlist",
+                2,
+                SetWishlist);
+            _severityButtons = BindButtonRange(
+                root,
+                "severity",
+                SeverityKeys.Length,
+                SetSeverity);
+
+            _includeWishlist.RegisterValueChangedCallback(
+                change =>
+                {
+                    _wishlistChoices.style.display = change.newValue
+                        ? DisplayStyle.Flex
+                        : DisplayStyle.None;
+                    RefreshSelectionClasses();
+                });
+            _bugTitle.RegisterValueChangedCallback(_ => RefreshSendState());
+            _cancel.clicked += Hide;
+            _send.clicked += Submit;
+            _retry.clicked += Load;
+            return true;
+        }
+
+        private void Show(
+            IndieableClient client,
+            bool bugMode)
         {
             _client = client;
             _bugMode = bugMode;
+            ResetForm();
+            if (!_visibilityReported)
+            {
+                _visibilityReported = true;
+                _client.NotifyFeedbackVisibility(true);
+            }
+            Load();
+        }
+
+        private void Load()
+        {
+            if (_client == null) return;
             _loading = true;
             _submitting = false;
-            _success = false;
-            _error = "";
+            _ready = false;
             _config = null;
-            enabled = true;
-            _client.NotifyFeedbackVisibility(true);
-            StartCoroutine(_client.GetFeedbackConfig(OnConfigLoaded, OnRequestError));
+            ApplyPresentation(
+                "Loading Indieable…",
+                showRetry: false,
+                showForms: false);
+            StartCoroutine(
+                _client.GetFeedbackConfig(
+                    OnConfigLoaded,
+                    OnLoadError));
         }
 
-        private void Hide()
-        {
-            var client = _client;
-            _client = null;
-            if (client != null) client.NotifyFeedbackVisibility(false);
-            Destroy(gameObject);
-        }
-
-        private void OnDestroy()
-        {
-            var client = _client;
-            _client = null;
-            if (client != null) client.NotifyFeedbackVisibility(false);
-            if (_instance == this) _instance = null;
-        }
-
-        private void OnConfigLoaded(IndieableFeedbackConfig config)
+        private void OnConfigLoaded(
+            IndieableFeedbackConfig config)
         {
             _loading = false;
             _config = config;
-            var questions = config != null && config.SurveyQuestions != null
-                ? config.SurveyQuestions
-                : new string[0];
-            _answers = new string[questions.Length];
+            if (config == null || !config.Available)
+            {
+                ApplyPresentation(
+                    config != null &&
+                    !string.IsNullOrWhiteSpace(config.Reason)
+                        ? config.Reason
+                        : "This game does not have an active playtest form.",
+                    showRetry: false,
+                    showForms: false);
+                return;
+            }
+
+            _ready = true;
+            _title.text = _bugMode
+                ? "Report a bug"
+                : string.IsNullOrWhiteSpace(config.Title)
+                    ? "Playtest feedback"
+                    : config.Title;
+            _description.text = string.IsNullOrWhiteSpace(config.Description)
+                ? (_bugMode
+                    ? "Tell the developer what happened and how to reproduce it."
+                    : "Tell the developer what was fun, unclear, or frustrating.")
+                : config.Description;
+            _meta.text = BuildMeta(config);
+            BuildSurveyQuestions(config.SurveyQuestions);
+            ApplyPresentation(
+                _bugMode
+                    ? "Add enough detail to reproduce the issue."
+                    : "Your feedback is optional and sent only when you choose Send.",
+                showRetry: false,
+                showForms: true);
         }
 
-        private void OnRequestError(IndieableError error)
+        private void OnLoadError(IndieableError error)
         {
             _loading = false;
-            _submitting = false;
-            _error = error != null ? error.Message : "Indieable request failed.";
+            _ready = false;
+            ApplyPresentation(
+                error != null
+                    ? error.Message
+                    : "The playtest form could not be loaded.",
+                showRetry: true,
+                showForms: false);
         }
 
-        private void OnGUI()
+        private void ApplyPresentation(
+            string status,
+            bool showRetry,
+            bool showForms)
         {
-            if (!enabled) return;
-            var width = Mathf.Min(680f, Mathf.Max(360f, Screen.width - 40f));
-            var height = Mathf.Min(760f, Mathf.Max(360f, Screen.height - 40f));
-            _window = new Rect(
-                (Screen.width - width) * 0.5f,
-                (Screen.height - height) * 0.5f,
-                width,
-                height);
-            _window = GUI.ModalWindow(GetInstanceID(), _window, DrawWindow, _bugMode ? "Report a bug" : "Playtest feedback");
+            _eyebrow.text = _bugMode
+                ? "BUG REPORT"
+                : "PLAYTEST FEEDBACK";
+            if (!showForms)
+            {
+                _title.text = _bugMode
+                    ? "Report a bug"
+                    : "Playtest feedback";
+                _description.text = "";
+                _meta.text = "";
+            }
+
+            _status.text = status ?? "";
+            _retry.style.display = showRetry
+                ? DisplayStyle.Flex
+                : DisplayStyle.None;
+            _feedbackForm.style.display =
+                showForms && !_bugMode
+                    ? DisplayStyle.Flex
+                    : DisplayStyle.None;
+            _bugForm.style.display =
+                showForms && _bugMode
+                    ? DisplayStyle.Flex
+                    : DisplayStyle.None;
+            _send.style.display = showForms
+                ? DisplayStyle.Flex
+                : DisplayStyle.None;
+            _cancel.text = showForms ? "Cancel" : "Close";
+            RefreshSendState();
         }
 
-        private void DrawWindow(int id)
+        private void ResetForm()
         {
-            GUILayout.Space(8f);
-            if (_loading)
-            {
-                GUILayout.Label("Loading Indieable…");
-                DrawCloseButton();
-                GUI.DragWindow();
-                return;
-            }
-
-            if (!string.IsNullOrEmpty(_error))
-            {
-                GUILayout.Label(_error);
-                GUILayout.Space(8f);
-                if (GUILayout.Button("Try again", GUILayout.Height(32f))) Show(_client, _bugMode);
-                DrawCloseButton();
-                GUI.DragWindow();
-                return;
-            }
-
-            if (_config == null || !_config.Available)
-            {
-                GUILayout.Label("This game does not have an active in-game playtest form.");
-                DrawCloseButton();
-                GUI.DragWindow();
-                return;
-            }
-
-            if (_success)
-            {
-                GUILayout.FlexibleSpace();
-                GUILayout.Label(_bugMode ? "Bug report sent. Thank you." : "Feedback sent. Thank you.", CenteredLabel());
-                GUILayout.Space(12f);
-                if (GUILayout.Button("Close", GUILayout.Height(34f))) Hide();
-                GUILayout.FlexibleSpace();
-                GUI.DragWindow();
-                return;
-            }
-
-            if (!string.IsNullOrWhiteSpace(_config.Title)) GUILayout.Label(_config.Title, HeadingLabel());
-            if (!string.IsNullOrWhiteSpace(_config.Description)) GUILayout.Label(_config.Description, WrapLabel());
-            if (_config.Round != null)
-            {
-                var round = "Round " + _config.Round.Number;
-                if (!string.IsNullOrWhiteSpace(_config.Round.BuildLabel)) round += " · " + _config.Round.BuildLabel;
-                GUILayout.Label(round);
-                if (!string.IsNullOrWhiteSpace(_config.Round.Focus)) GUILayout.Label("Focus: " + _config.Round.Focus, WrapLabel());
-            }
-            if (_config.Anonymous) GUILayout.Label("Submitting anonymously to the developer.");
-            GUILayout.Space(8f);
-
-            _scroll = GUILayout.BeginScrollView(_scroll);
-            if (_bugMode) DrawBugForm();
-            else DrawFeedbackForm();
-            GUILayout.EndScrollView();
-
-            GUILayout.Space(8f);
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Cancel", GUILayout.Height(34f))) Hide();
-            GUI.enabled = !_submitting && CanSubmit();
-            if (GUILayout.Button(_submitting ? "Sending…" : "Send", GUILayout.Height(34f))) Submit();
-            GUI.enabled = true;
-            GUILayout.EndHorizontal();
-            GUI.DragWindow(new Rect(0, 0, _window.width, 28f));
+            _rating = 0;
+            _playLengthIndex = -1;
+            _severityIndex = 1;
+            _wouldWishlist = false;
+            _liked.value = "";
+            _confused.value = "";
+            _pitch.value = "";
+            _includeWishlist.value = false;
+            _wishlistChoices.style.display = DisplayStyle.None;
+            _bugTitle.value = "";
+            _bugDescription.value = "";
+            _surveyQuestions.Clear();
+            _answerFields = new TextField[0];
+            RefreshSelectionClasses();
         }
 
-        private void DrawFeedbackForm()
+        private void BuildSurveyQuestions(string[] questions)
         {
-            GUILayout.Label("Overall rating");
-            GUILayout.BeginHorizontal();
-            for (var i = 1; i <= 5; i++)
+            _surveyQuestions.Clear();
+            questions = questions ?? new string[0];
+            _answerFields = new TextField[questions.Length];
+            for (int index = 0; index < questions.Length; index++)
             {
-                var label = i <= _rating ? "★" : "☆";
-                if (GUILayout.Button(label, GUILayout.Height(34f))) _rating = i;
-            }
-            GUILayout.EndHorizontal();
-
-            GUILayout.Space(8f);
-            GUILayout.Label("What did you enjoy?");
-            _liked = GUILayout.TextArea(_liked, GUILayout.MinHeight(64f));
-            GUILayout.Label("What was confusing or frustrating?");
-            _confused = GUILayout.TextArea(_confused, GUILayout.MinHeight(64f));
-
-            GUILayout.Label("How long did you play?");
-            _playLengthIndex = GUILayout.SelectionGrid(_playLengthIndex, PlayLengthLabels, 2);
-
-            _includeWishlist = GUILayout.Toggle(_includeWishlist, "Answer wishlist question");
-            if (_includeWishlist)
-            {
-                GUILayout.BeginHorizontal();
-                if (GUILayout.Toggle(_wouldWishlist, "I would wishlist it")) _wouldWishlist = true;
-                if (GUILayout.Toggle(!_wouldWishlist, "Not yet")) _wouldWishlist = false;
-                GUILayout.EndHorizontal();
-            }
-
-            GUILayout.Label("How would you describe the game to a friend?");
-            _pitch = GUILayout.TextArea(_pitch, GUILayout.MinHeight(56f));
-
-            var questions = _config.SurveyQuestions ?? new string[0];
-            for (var i = 0; i < questions.Length; i++)
-            {
-                GUILayout.Label(questions[i]);
-                _answers[i] = GUILayout.TextArea(_answers[i] ?? "", GUILayout.MinHeight(56f));
+                var field = new TextField(questions[index])
+                {
+                    multiline = true
+                };
+                field.AddToClassList("feedback-text-area");
+                _surveyQuestions.Add(field);
+                _answerFields[index] = field;
             }
         }
 
-        private void DrawBugForm()
+        private Button[] BindButtonRange(
+            VisualElement root,
+            string prefix,
+            int count,
+            Action<int> select)
         {
-            GUILayout.Label("Title");
-            _bugTitle = GUILayout.TextField(_bugTitle);
-            GUILayout.Label("What happened? Include reproduction steps when possible.");
-            _bugDescription = GUILayout.TextArea(_bugDescription, GUILayout.MinHeight(160f));
-            GUILayout.Label("Severity");
-            _severityIndex = GUILayout.SelectionGrid(_severityIndex, SeverityLabels, 3);
+            var buttons = new Button[count];
+            for (int index = 0; index < count; index++)
+            {
+                int selectedIndex = index;
+                buttons[index] = Require<Button>(
+                    root,
+                    prefix + "-" + index);
+                buttons[index].clicked += () => select(selectedIndex);
+            }
+            return buttons;
         }
 
-        private bool CanSubmit()
+        private void SetRating(int index)
         {
-            return _bugMode ? !string.IsNullOrWhiteSpace(_bugTitle) : _rating >= 1 && _rating <= 5;
+            _rating = index + 1;
+            RefreshSelectionClasses();
+            RefreshSendState();
+        }
+
+        private void SetPlayLength(int index)
+        {
+            _playLengthIndex = index;
+            RefreshSelectionClasses();
+        }
+
+        private void SetWishlist(int index)
+        {
+            _wouldWishlist = index == 0;
+            RefreshSelectionClasses();
+        }
+
+        private void SetSeverity(int index)
+        {
+            _severityIndex = index;
+            RefreshSelectionClasses();
+        }
+
+        private void RefreshSelectionClasses()
+        {
+            EnableSelection(_ratingButtons, _rating - 1);
+            EnableSelection(_playLengthButtons, _playLengthIndex);
+            EnableSelection(
+                _wishlistButtons,
+                _includeWishlist.value
+                    ? (_wouldWishlist ? 0 : 1)
+                    : -1);
+            EnableSelection(_severityButtons, _severityIndex);
+        }
+
+        private static void EnableSelection(
+            Button[] buttons,
+            int selectedIndex)
+        {
+            if (buttons == null) return;
+            for (int index = 0; index < buttons.Length; index++)
+            {
+                buttons[index].EnableInClassList(
+                    "is-selected",
+                    index == selectedIndex);
+            }
+        }
+
+        private void RefreshSendState()
+        {
+            bool canSubmit = _ready &&
+                !_loading &&
+                !_submitting &&
+                (_bugMode
+                    ? !string.IsNullOrWhiteSpace(_bugTitle.value)
+                    : _rating >= 1 && _rating <= 5);
+            _send.SetEnabled(canSubmit);
         }
 
         private void Submit()
         {
+            if (!_ready || _submitting || _client == null) return;
             _submitting = true;
-            _error = "";
+            _status.text = "Sending…";
+            RefreshSendState();
+
             if (_bugMode)
             {
                 var submission = new IndieableBugReportSubmission
                 {
-                    Title = _bugTitle,
-                    Description = _bugDescription,
-                    Severity = SeverityKeys[Mathf.Clamp(_severityIndex, 0, SeverityKeys.Length - 1)]
+                    Title = _bugTitle.value ?? "",
+                    Description = _bugDescription.value ?? "",
+                    Severity = SeverityKeys[Mathf.Clamp(
+                        _severityIndex,
+                        0,
+                        SeverityKeys.Length - 1)]
                 };
-                StartCoroutine(_client.SubmitBugReport(submission, delegate(string _) { SubmissionComplete(); }, OnRequestError));
+                StartCoroutine(
+                    _client.SubmitBugReport(
+                        submission,
+                        _ => SubmissionComplete(),
+                        OnSubmitError));
                 return;
             }
 
-            var questions = _config.SurveyQuestions ?? new string[0];
-            var answerRows = new IndieableSurveyAnswer[questions.Length];
-            for (var i = 0; i < questions.Length; i++)
+            string[] questions = _config.SurveyQuestions ??
+                                 new string[0];
+            var answers = new IndieableSurveyAnswer[questions.Length];
+            for (int index = 0; index < questions.Length; index++)
             {
-                answerRows[i] = new IndieableSurveyAnswer { Question = questions[i], Answer = _answers[i] ?? "" };
+                answers[index] = new IndieableSurveyAnswer
+                {
+                    Question = questions[index],
+                    Answer = _answerFields[index].value ?? ""
+                };
             }
+
             var feedback = new IndieableFeedbackSubmission
             {
                 Rating = _rating,
-                Liked = _liked,
-                Confused = _confused,
-                IncludeWouldWishlist = _includeWishlist,
+                Liked = _liked.value ?? "",
+                Confused = _confused.value ?? "",
+                IncludeWouldWishlist = _includeWishlist.value,
                 WouldWishlist = _wouldWishlist,
-                PlayLength = _playLengthIndex >= 0 && _playLengthIndex < PlayLengthKeys.Length
+                PlayLength = _playLengthIndex >= 0 &&
+                             _playLengthIndex < PlayLengthKeys.Length
                     ? PlayLengthKeys[_playLengthIndex]
                     : "",
-                Pitch = _pitch,
-                Answers = answerRows
+                Pitch = _pitch.value ?? "",
+                Answers = answers
             };
-            StartCoroutine(_client.SubmitFeedback(feedback, delegate(string _) { SubmissionComplete(); }, OnRequestError));
+            StartCoroutine(
+                _client.SubmitFeedback(
+                    feedback,
+                    _ => SubmissionComplete(),
+                    OnSubmitError));
         }
 
         private void SubmissionComplete()
         {
             _submitting = false;
-            _success = true;
+            _ready = false;
+            ApplyPresentation(
+                _bugMode
+                    ? "Bug report sent. Thank you."
+                    : "Feedback sent. Thank you.",
+                showRetry: false,
+                showForms: false);
         }
 
-        private void DrawCloseButton()
+        private void OnSubmitError(IndieableError error)
         {
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Close", GUILayout.Height(34f))) Hide();
+            _submitting = false;
+            _status.text = error != null
+                ? error.Message
+                : "The submission could not be sent.";
+            RefreshSendState();
         }
 
-        private static GUIStyle HeadingLabel()
+        private void Hide()
         {
-            var style = new GUIStyle(GUI.skin.label);
-            style.fontSize = 18;
-            style.fontStyle = FontStyle.Bold;
-            style.wordWrap = true;
-            return style;
+            ReleaseVisibility();
+            Destroy(gameObject);
         }
 
-        private static GUIStyle WrapLabel()
+        private void ReleaseVisibility()
         {
-            var style = new GUIStyle(GUI.skin.label);
-            style.wordWrap = true;
-            return style;
+            if (!_visibilityReported) return;
+            _visibilityReported = false;
+            _client?.NotifyFeedbackVisibility(false);
         }
 
-        private static GUIStyle CenteredLabel()
+        private void OnDestroy()
         {
-            var style = HeadingLabel();
-            style.alignment = TextAnchor.MiddleCenter;
-            return style;
+            ReleaseVisibility();
+            if (_panelSettings != null)
+                Destroy(_panelSettings);
+            if (_instance == this) _instance = null;
+        }
+
+        private static string BuildMeta(
+            IndieableFeedbackConfig config)
+        {
+            string value = config.Anonymous
+                ? "Submitted anonymously to the developer."
+                : "Submitted to the developer.";
+            if (config.Round == null) return value;
+
+            value += " Round " + config.Round.Number;
+            if (!string.IsNullOrWhiteSpace(config.Round.BuildLabel))
+                value += " · " + config.Round.BuildLabel;
+            if (!string.IsNullOrWhiteSpace(config.Round.Focus))
+                value += " · Focus: " + config.Round.Focus;
+            return value;
+        }
+
+        private static T Require<T>(
+            VisualElement root,
+            string name)
+            where T : VisualElement
+        {
+            T value = root.Q<T>(name);
+            if (value == null)
+            {
+                throw new InvalidOperationException(
+                    "Indieable feedback UI is missing element '" +
+                    name + "'.");
+            }
+            return value;
         }
     }
 }

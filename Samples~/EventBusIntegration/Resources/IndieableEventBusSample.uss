@@ -17,7 +17,7 @@
 
 .eyebrow {
     font-size: 11px;
-    unity-font-style: bold;
+    -unity-font-style: bold;
     letter-spacing: 1.5px;
     color: rgb(96, 82, 140);
     margin-bottom: 4px;
@@ -25,7 +25,7 @@
 
 .title {
     font-size: 31px;
-    unity-font-style: bold;
+    -unity-font-style: bold;
     margin-bottom: 7px;
 }
 
@@ -63,7 +63,7 @@
 
 .section-title {
     font-size: 18px;
-    unity-font-style: bold;
+    -unity-font-style: bold;
     margin-bottom: 5px;
 }
 
@@ -100,7 +100,7 @@
     border-color: rgb(183, 178, 162);
     background-color: rgb(242, 239, 226);
     color: rgb(30, 30, 35);
-    unity-font-style: bold;
+    -unity-font-style: bold;
 }
 
 .button:hover {
@@ -184,7 +184,7 @@
 
 .modal-title {
     font-size: 23px;
-    unity-font-style: bold;
+    -unity-font-style: bold;
 }
 
 .permission-card {
@@ -195,7 +195,7 @@
 }
 
 .permission-card Toggle {
-    unity-font-style: bold;
+    -unity-font-style: bold;
 }
 
 .permission-copy {

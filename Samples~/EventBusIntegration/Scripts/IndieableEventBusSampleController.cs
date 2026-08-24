@@ -15,6 +15,7 @@ namespace IndieableSdk.Samples.EventBus
         private const string ResourceName = "IndieableEventBusSample";
         [Header("Integration")]
         [SerializeField] private IndieableEventBusBridge eventBusBridge;
+        [SerializeField] private IndieableUiToolkitAssets uiToolkitAssets;
 
         [Header("Sample gameplay systems")]
         [SerializeField] private SampleDoor door;
@@ -41,6 +42,9 @@ namespace IndieableSdk.Samples.EventBus
 
         private void Awake()
         {
+            if (uiToolkitAssets != null)
+                Indieable.ConfigureUiToolkit(uiToolkitAssets);
+
             if (eventBusBridge == null)
                 eventBusBridge = GetComponent<IndieableEventBusBridge>();
 
@@ -81,15 +85,30 @@ namespace IndieableSdk.Samples.EventBus
                 return;
             }
 
+            ThemeStyleSheet theme =
+                uiToolkitAssets != null &&
+                uiToolkitAssets.ThemeStyleSheet != null
+                    ? uiToolkitAssets.ThemeStyleSheet
+                    : Resources.Load<ThemeStyleSheet>(
+                        "IndieableDefaultRuntimeTheme");
+            if (theme == null)
+            {
+                Debug.LogWarning(
+                    "[Indieable Sample] Missing runtime UI Toolkit theme.");
+                enabled = false;
+                return;
+            }
+
             _panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            _panelSettings.themeStyleSheet = theme;
             _panelSettings.scaleMode = PanelScaleMode.ScaleWithScreenSize;
             _panelSettings.referenceResolution = new Vector2Int(1440, 900);
             _panelSettings.screenMatchMode = PanelScreenMatchMode.MatchWidthOrHeight;
             _panelSettings.match = 0.5f;
-            _panelSettings.sortingOrder = 1000;
 
             _document = gameObject.AddComponent<UIDocument>();
             _document.panelSettings = _panelSettings;
+            _document.sortingOrder = 1000;
             visualTree.CloneTree(_document.rootVisualElement);
             _document.rootVisualElement.styleSheets.Add(styleSheet);
 

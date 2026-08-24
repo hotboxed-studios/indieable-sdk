@@ -17,6 +17,9 @@ Event Bus Integration/Scenes/IndieableEventBusSample.unity
 ```
 
 The exact imported parent folder uses Unity's package display name/version.
+The imported `Config/IndieableSampleUiToolkitAssets.asset` must reference the
+five editable files under `UI/`; the package-cache defaults are only fallback
+assets.
 
 ## Scene hierarchy
 
@@ -49,6 +52,8 @@ Enter Play Mode without changing the placeholder Public Game Key.
 Expected:
 
 - the UI Toolkit dashboard renders;
+- the sample-owned runtime theme is assigned (controls are not unstyled white
+  bars);
 - no request occurs automatically;
 - no persistent identity is created;
 - clicking game-event buttons adds a local `BUS` entry;
@@ -175,6 +180,10 @@ Test Unity 2022.3 and Unity 6:
 - sample scene opens without missing scripts;
 - routing asset resolves;
 - UI Toolkit popup fits 1280×720, 1920×1080, and a narrow window;
+- consent, feedback, and bug-report surfaces render as bounded bottom-right
+  cards instead of full-screen panels;
+- startup consent has no dismiss-only action and remains until Save or Decline;
+- Feedback and Bug Report remain until Send, Cancel, or Close;
 - keyboard focus can reach all controls;
 - equal permission actions remain equal width;
 - the sample never changes `Time.timeScale`;

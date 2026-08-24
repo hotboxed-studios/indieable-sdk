@@ -13,6 +13,18 @@ Then open:
 Scenes/IndieableEventBusSample.unity
 ```
 
+The import includes `Config/IndieableSampleUiToolkitAssets.asset` and editable
+UXML, USS, and TSS copies under `UI/`. The sample scene assigns this asset set in
+`Awake`, so its first automatic consent card and its Player Data, Feedback, and
+Bug Report buttons all use the imported copies. No package-cache file needs to
+be edited.
+
+Importing the sample does not create or overwrite Project Settings. Once the
+project-owned Indieable settings have a valid Public Game Key, automatic
+initialization and **Show Startup Consent** are enabled by default. Opening this
+sample scene and entering Play Mode then shows the editable consent card after
+the first scene loads.
+
 The imported scene contains these GameObjects:
 
 ```text
@@ -103,10 +115,11 @@ run_completed
 ```
 
 4. Publish the game's Player Data notice.
-5. Enter Play Mode. The SDK initializes before scene `Awake` and opens its
-   built-in UI Toolkit consent form after the first scene loads. Declining or
-   saving selected purposes records the choice for the current notice version;
-   dismissing or failing to load it does not.
+5. Enter Play Mode. The SDK initializes before scene `Awake`; the sample applies
+   its editable UI assets during `Awake`; then the SDK opens the bottom-right
+   UI Toolkit consent card after the first scene loads. It remains until the
+   Player explicitly declines or saves. A successful choice records the current
+   notice version; a failed load does not.
 6. Fire sample gameplay events and inspect the local activity log and Indieable
    Connect console.
 

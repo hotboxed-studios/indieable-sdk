@@ -20,6 +20,7 @@ namespace IndieableSdk
             IndieableRuntime.ResetForRuntimeStartup();
             IndieablePrivacyUI.ResetForRuntimeStartup();
             IndieableFeedbackUI.ResetForRuntimeStartup();
+            IndieableUiToolkitFactory.ResetForRuntimeStartup();
             IndieableStartupConsent.ResetForRuntimeStartup();
             GlobalEventBus.Clear();
             IndieableEventPayloadJson.CustomSerializer = null;

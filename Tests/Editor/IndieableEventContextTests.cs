@@ -225,8 +225,12 @@ namespace IndieableSdk.Tests
         }
 
         [Test]
-        public void PrivacyUiToolkitResources_ArePackaged()
+        public void SupportUiToolkitResources_ArePackagedAndThemed()
         {
+            Assert.That(
+                Resources.Load<ThemeStyleSheet>(
+                    "IndieableDefaultRuntimeTheme"),
+                Is.Not.Null);
             Assert.That(
                 Resources.Load<VisualTreeAsset>(
                     "IndieablePrivacyPreferences"),
@@ -235,6 +239,84 @@ namespace IndieableSdk.Tests
                 Resources.Load<StyleSheet>(
                     "IndieablePrivacyPreferences"),
                 Is.Not.Null);
+            Assert.That(
+                Resources.Load<VisualTreeAsset>("IndieableFeedback"),
+                Is.Not.Null);
+            Assert.That(
+                Resources.Load<StyleSheet>("IndieableFeedback"),
+                Is.Not.Null);
+        }
+
+        [Test]
+        public void SupportUiToolkitFactory_CreatesThemedPickThroughCard()
+        {
+            GameObject host = new GameObject("Indieable UI test host");
+            UIDocument document = null;
+            PanelSettings panel = null;
+            try
+            {
+                IndieableUiToolkitFactory.Configure(null);
+                Assert.That(
+                    IndieableUiToolkitFactory.TryCreateDocument(
+                        host,
+                        IndieableUiToolkitView.Privacy,
+                        32000,
+                        out document,
+                        out panel),
+                    Is.True);
+                Assert.That(panel.themeStyleSheet, Is.Not.Null);
+                Assert.That(document.sortingOrder, Is.EqualTo(32000));
+                Assert.That(
+                    document.rootVisualElement.pickingMode,
+                    Is.EqualTo(PickingMode.Ignore));
+                Assert.That(
+                    document.rootVisualElement
+                        .Q<VisualElement>("privacy-card")
+                        .pickingMode,
+                    Is.EqualTo(PickingMode.Position));
+            }
+            finally
+            {
+                IndieableUiToolkitFactory.Configure(null);
+                if (panel != null)
+                    UnityEngine.Object.DestroyImmediate(panel);
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void SupportUiLayouts_ExposeBoundedCardContracts()
+        {
+            TemplateContainer privacy = Resources
+                .Load<VisualTreeAsset>("IndieablePrivacyPreferences")
+                .CloneTree();
+            TemplateContainer feedback = Resources
+                .Load<VisualTreeAsset>("IndieableFeedback")
+                .CloneTree();
+
+            Assert.That(
+                privacy.Q<VisualElement>("privacy-card"),
+                Is.Not.Null);
+            Assert.That(privacy.Q<Button>("close"), Is.Null);
+            Assert.That(privacy.Q<Button>("decline"), Is.Not.Null);
+            Assert.That(privacy.Q<Button>("save"), Is.Not.Null);
+            Assert.That(
+                feedback.Q<VisualElement>("feedback-card"),
+                Is.Not.Null);
+            Assert.That(feedback.Q<Button>("feedback-send"), Is.Not.Null);
+            Assert.That(feedback.Q<TextField>("bug-title"), Is.Not.Null);
+        }
+
+        [Test]
+        public void FeedbackSurface_UsesUiToolkitInsteadOfLegacyImgui()
+        {
+            MonoScript script = AssetDatabase.LoadAssetAtPath<MonoScript>(
+                "Packages/com.indieable.sdk/Runtime/IndieableFeedbackUI.cs");
+
+            Assert.That(script, Is.Not.Null);
+            Assert.That(script.text, Does.Contain("UnityEngine.UIElements"));
+            Assert.That(script.text, Does.Not.Contain("OnGUI"));
+            Assert.That(script.text, Does.Not.Contain("GUILayout"));
         }
     }
 }

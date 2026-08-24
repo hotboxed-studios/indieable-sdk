@@ -12,13 +12,20 @@ ROOT = Path(__file__).resolve().parents[1]
 SAMPLE = ROOT / "Samples~/EventBusIntegration"
 SCRIPTS = SAMPLE / "Scripts"
 RESOURCES = SAMPLE / "Resources"
+UI = SAMPLE / "UI"
 
 REQUIRED_SAMPLE_FILES = (
     "README.md",
     "Scenes/IndieableEventBusSample.unity",
+    "Config/IndieableSampleUiToolkitAssets.asset",
     "Config/SampleEventRouting.asset",
     "Resources/IndieableEventBusSample.uxml",
     "Resources/IndieableEventBusSample.uss",
+    "UI/IndieableSampleDefaultRuntimeTheme.tss",
+    "UI/IndieableSampleFeedback.uxml",
+    "UI/IndieableSampleFeedback.uss",
+    "UI/IndieableSamplePrivacy.uxml",
+    "UI/IndieableSamplePrivacy.uss",
     "Scripts/Indieable.EventBusSample.asmdef",
     "Scripts/SampleEventNames.cs",
     "Scripts/SampleEvents.cs",
@@ -116,8 +123,10 @@ def main() -> int:
                 "UnityEngine.UIElements",
                 "GlobalEventBus.SubscribeAll",
                 "eventBusBridge.ApplyPrivacyPreferences",
+                "Indieable.ConfigureUiToolkit(uiToolkitAssets)",
                 "Indieable.OpenPrivacyPreferences",
                 "Indieable.SendEvent",
+                "themeStyleSheet",
             ),
             "sample controller",
             errors,
@@ -146,6 +155,83 @@ def main() -> int:
         ):
             errors.append(
                 "sample contains a server-side Indieable credential"
+            )
+
+    scene_path = SAMPLE / "Scenes/IndieableEventBusSample.unity"
+    if scene_path.is_file():
+        scene = scene_path.read_text(encoding="utf-8")
+        if "uiToolkitAssets:" not in scene:
+            errors.append(
+                "sample scene does not reference its editable UI asset set"
+            )
+
+    ui_asset_path = (
+        SAMPLE / "Config/IndieableSampleUiToolkitAssets.asset"
+    )
+    if ui_asset_path.is_file():
+        ui_asset = ui_asset_path.read_text(encoding="utf-8")
+        require_markers(
+            ui_asset,
+            (
+                "themeStyleSheet:",
+                "privacyLayout:",
+                "privacyStyles:",
+                "feedbackLayout:",
+                "feedbackStyles:",
+            ),
+            "sample UI asset set",
+            errors,
+        )
+
+    privacy_layout = UI / "IndieableSamplePrivacy.uxml"
+    if privacy_layout.is_file():
+        privacy_uxml = privacy_layout.read_text(encoding="utf-8")
+        require_markers(
+            privacy_uxml,
+            (
+                'name="privacy-card"',
+                'name="save"',
+                'name="decline"',
+                'name="retry"',
+            ),
+            "sample privacy UXML",
+            errors,
+        )
+        if 'name="close"' in privacy_uxml:
+            errors.append(
+                "sample startup privacy UXML must not have Close"
+            )
+
+    feedback_layout = UI / "IndieableSampleFeedback.uxml"
+    if feedback_layout.is_file():
+        require_markers(
+            feedback_layout.read_text(encoding="utf-8"),
+            (
+                'name="feedback-card"',
+                'name="feedback-form"',
+                'name="bug-form"',
+                'name="feedback-send"',
+                'name="feedback-cancel"',
+            ),
+            "sample feedback UXML",
+            errors,
+        )
+
+    for stylesheet_name in (
+        "IndieableSamplePrivacy.uss",
+        "IndieableSampleFeedback.uss",
+    ):
+        stylesheet = UI / stylesheet_name
+        if stylesheet.is_file():
+            require_markers(
+                stylesheet.read_text(encoding="utf-8"),
+                (
+                    "align-items: flex-end",
+                    "justify-content: flex-end",
+                    "background-color:",
+                ),
+                f"sample {stylesheet_name}",
+                errors,
             )
 
     uxml_path = (

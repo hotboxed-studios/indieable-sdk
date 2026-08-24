@@ -1,0 +1,66 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="feedback-root" class="feedback-root" picking-mode="Ignore">
+        <ui:VisualElement name="feedback-card" class="feedback-card" picking-mode="Position">
+            <ui:VisualElement class="feedback-header">
+                <ui:VisualElement class="feedback-grow">
+                    <ui:Label name="feedback-eyebrow" text="PLAYTEST FEEDBACK" class="feedback-eyebrow" />
+                    <ui:Label name="feedback-title" text="Playtest feedback" class="feedback-title" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:ScrollView class="feedback-scroll">
+                <ui:Label name="feedback-description" text="" class="feedback-copy" />
+                <ui:Label name="feedback-meta" text="" class="feedback-note" />
+
+                <ui:VisualElement name="feedback-form" style="display: none;">
+                    <ui:Label text="Overall rating" class="feedback-section-title" />
+                    <ui:VisualElement class="feedback-chip-row">
+                        <ui:Button name="rating-0" text="1" class="feedback-chip feedback-rating" />
+                        <ui:Button name="rating-1" text="2" class="feedback-chip feedback-rating" />
+                        <ui:Button name="rating-2" text="3" class="feedback-chip feedback-rating" />
+                        <ui:Button name="rating-3" text="4" class="feedback-chip feedback-rating" />
+                        <ui:Button name="rating-4" text="5" class="feedback-chip feedback-rating" />
+                    </ui:VisualElement>
+                    <ui:TextField name="liked" label="What did you enjoy?" multiline="true" class="feedback-text-area" />
+                    <ui:TextField name="confused" label="What was confusing or frustrating?" multiline="true" class="feedback-text-area" />
+
+                    <ui:Label text="How long did you play?" class="feedback-section-title" />
+                    <ui:VisualElement class="feedback-chip-row">
+                        <ui:Button name="play-length-0" text="Under 15m" class="feedback-chip" />
+                        <ui:Button name="play-length-1" text="15–30m" class="feedback-chip" />
+                        <ui:Button name="play-length-2" text="30–60m" class="feedback-chip" />
+                        <ui:Button name="play-length-3" text="1–2h" class="feedback-chip" />
+                        <ui:Button name="play-length-4" text="2h+" class="feedback-chip" />
+                    </ui:VisualElement>
+
+                    <ui:Toggle name="include-wishlist" label="Answer the replay/wishlist question" value="false" class="feedback-toggle" />
+                    <ui:VisualElement name="wishlist-choices" class="feedback-chip-row" style="display: none;">
+                        <ui:Button name="wishlist-0" text="Would wishlist" class="feedback-chip" />
+                        <ui:Button name="wishlist-1" text="Not yet" class="feedback-chip" />
+                    </ui:VisualElement>
+                    <ui:TextField name="pitch" label="How would you describe the game to a friend?" multiline="true" class="feedback-text-area" />
+                    <ui:VisualElement name="survey-questions" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="bug-form" style="display: none;">
+                    <ui:TextField name="bug-title" label="Title" class="feedback-input" />
+                    <ui:TextField name="bug-description" label="What happened? Include reproduction steps when possible." multiline="true" class="feedback-text-area feedback-bug-description" />
+                    <ui:Label text="Severity" class="feedback-section-title" />
+                    <ui:VisualElement class="feedback-chip-row">
+                        <ui:Button name="severity-0" text="Minor" class="feedback-chip" />
+                        <ui:Button name="severity-1" text="Major" class="feedback-chip" />
+                        <ui:Button name="severity-2" text="Blocker" class="feedback-chip" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:Label name="feedback-status" text="Loading Indieable…" class="feedback-status" />
+                <ui:Button name="feedback-retry" text="Try again" class="feedback-button feedback-retry" style="display: none;" />
+            </ui:ScrollView>
+
+            <ui:VisualElement class="feedback-actions">
+                <ui:Button name="feedback-cancel" text="Close" class="feedback-button feedback-action" />
+                <ui:Button name="feedback-send" text="Send" class="feedback-button feedback-primary feedback-action" style="display: none;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

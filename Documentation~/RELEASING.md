@@ -41,8 +41,8 @@ not persisted.
 7. Push the matching tag, for example:
 
    ```bash
-   git tag v0.5.1
-   git push origin v0.5.1
+   git tag v0.6.0
+   git push origin v0.6.0
    ```
 
 The `Release` workflow rejects a tag that does not exactly match both package

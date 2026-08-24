@@ -6,9 +6,6 @@ namespace IndieableSdk
 {
     internal sealed class IndieablePrivacyUI : MonoBehaviour
     {
-        private const string ResourceName =
-            "IndieablePrivacyPreferences";
-
         private static IndieablePrivacyUI _instance;
 
         private IndieableClient _client;
@@ -25,25 +22,27 @@ namespace IndieableSdk
         private Toggle _telemetryToggle;
         private Toggle _diagnosticsToggle;
         private Button _privacyPolicy;
-        private Button _close;
         private Button _decline;
         private Button _save;
-        private bool _initialPrompt;
+        private Button _retry;
         private bool _busy;
+        private bool _canChoose;
+        private bool _telemetryAvailable;
+        private bool _diagnosticsAvailable;
         private bool _visibilityReported;
 
         internal static bool IsOpen => _instance != null;
 
         internal static void Open(IndieableClient client)
         {
-            OpenInternal(client, null, false);
+            OpenInternal(client, null);
         }
 
         internal static void OpenInitial(
             IndieableClient client,
             IndieablePrivacyManifest manifest)
         {
-            OpenInternal(client, manifest, true);
+            OpenInternal(client, manifest);
         }
 
         internal static void Close()
@@ -60,20 +59,17 @@ namespace IndieableSdk
 
         private static void OpenInternal(
             IndieableClient client,
-            IndieablePrivacyManifest manifest,
-            bool initialPrompt)
+            IndieablePrivacyManifest manifest)
         {
             if (client == null) return;
             if (_instance != null)
             {
                 _instance._client = client;
-                _instance._initialPrompt |= initialPrompt;
                 if (manifest != null)
                 {
                     _instance._manifest = manifest;
                     _instance.PopulateManifest();
                 }
-                _instance.RefreshCloseVisibility();
                 return;
             }
 
@@ -82,7 +78,7 @@ namespace IndieableSdk
             host.hideFlags = HideFlags.HideAndDontSave;
             DontDestroyOnLoad(host);
             var instance = host.AddComponent<IndieablePrivacyUI>();
-            if (!instance.Initialize(client, manifest, initialPrompt))
+            if (!instance.Initialize(client, manifest))
             {
                 Destroy(host);
                 return;
@@ -96,40 +92,22 @@ namespace IndieableSdk
 
         private bool Initialize(
             IndieableClient client,
-            IndieablePrivacyManifest manifest,
-            bool initialPrompt)
+            IndieablePrivacyManifest manifest)
         {
             _client = client;
             _settings = IndieableAutoBootstrap.Settings ??
                 IndieableProjectSettings.Load();
             _manifest = manifest;
-            _initialPrompt = initialPrompt;
 
-            var visualTree =
-                Resources.Load<VisualTreeAsset>(ResourceName);
-            var styleSheet = Resources.Load<StyleSheet>(ResourceName);
-            if (visualTree == null || styleSheet == null)
+            if (!IndieableUiToolkitFactory.TryCreateDocument(
+                    gameObject,
+                    IndieableUiToolkitView.Privacy,
+                    32000,
+                    out _document,
+                    out _panelSettings))
             {
-                Debug.LogWarning(
-                    "[Indieable] Privacy UI Toolkit resources are missing.");
                 return false;
             }
-
-            _panelSettings =
-                ScriptableObject.CreateInstance<PanelSettings>();
-            _panelSettings.scaleMode =
-                PanelScaleMode.ScaleWithScreenSize;
-            _panelSettings.referenceResolution =
-                new Vector2Int(1440, 900);
-            _panelSettings.screenMatchMode =
-                PanelScreenMatchMode.MatchWidthOrHeight;
-            _panelSettings.match = 0.5f;
-            _panelSettings.sortingOrder = 32000;
-
-            _document = gameObject.AddComponent<UIDocument>();
-            _document.panelSettings = _panelSettings;
-            visualTree.CloneTree(_document.rootVisualElement);
-            _document.rootVisualElement.styleSheets.Add(styleSheet);
 
             VisualElement root = _document.rootVisualElement;
             _gameTitle = Require<Label>(root, "game-title");
@@ -145,22 +123,26 @@ namespace IndieableSdk
             _diagnosticsToggle =
                 Require<Toggle>(root, "diagnostics-toggle");
             _privacyPolicy = Require<Button>(root, "privacy-policy");
-            _close = Require<Button>(root, "close");
             _decline = Require<Button>(root, "decline");
             _save = Require<Button>(root, "save");
+            _retry = Require<Button>(root, "retry");
 
             _privacyPolicy.clicked += OpenPrivacyPolicy;
-            _close.clicked += Close;
             _decline.clicked += () => SaveChoices(false, false);
             _save.clicked += () => SaveChoices(
                 _telemetryToggle.value,
                 _diagnosticsToggle.value);
-            RefreshCloseVisibility();
+            _retry.clicked += Load;
+            _privacyPolicy.style.display = DisplayStyle.None;
+            _retry.style.display = DisplayStyle.None;
             return true;
         }
 
         private void Load()
         {
+            _canChoose = false;
+            if (_retry != null)
+                _retry.style.display = DisplayStyle.None;
             SetBusy(true, "Loading privacy notice…");
             if (_manifest != null)
             {
@@ -170,8 +152,7 @@ namespace IndieableSdk
 
             Indieable.GetPrivacyManifest(
                 OnManifestLoaded,
-                error => SetBusy(
-                    false,
+                error => SetUnavailable(
                     error != null
                         ? error.Message
                         : "The privacy notice could not be loaded."));
@@ -180,7 +161,18 @@ namespace IndieableSdk
         private void OnManifestLoaded(
             IndieablePrivacyManifest manifest)
         {
+            if (manifest == null ||
+                !manifest.Configured ||
+                string.IsNullOrWhiteSpace(manifest.NoticeVersion))
+            {
+                _manifest = null;
+                SetUnavailable(
+                    "This game has not published a Player Data notice.");
+                return;
+            }
+
             _manifest = manifest;
+            _canChoose = true;
             PopulateManifest();
             if (Indieable.IsConnected)
             {
@@ -190,16 +182,29 @@ namespace IndieableSdk
                         ApplyPreferences(preferences);
                         SetBusy(false, "Review or change each choice.");
                     },
-                    error => SetBusy(
-                        false,
-                        error != null
-                            ? error.Message
-                            : "Current preferences could not be loaded."));
+                    error =>
+                    {
+                        ApplyLocalDecision();
+                        SetBusy(
+                            false,
+                            (error != null
+                                ? error.Message
+                                : "Current preferences could not be loaded.") +
+                            " You can still save a new choice.");
+                    });
                 return;
             }
 
             ApplyLocalDecision();
             SetBusy(false, "Choose separately for each optional purpose.");
+        }
+
+        private void SetUnavailable(string message)
+        {
+            _canChoose = false;
+            SetBusy(false, message);
+            if (_retry != null)
+                _retry.style.display = DisplayStyle.Flex;
         }
 
         private void PopulateManifest()
@@ -227,16 +232,24 @@ namespace IndieableSdk
                 ? DisplayStyle.Flex
                 : DisplayStyle.None;
 
-            ConfigurePurpose(
+            IndieablePrivacyPurpose telemetryPurpose =
                 _manifest.FindPurpose(
-                    Indieable.GameplayTelemetryPurpose),
+                    Indieable.GameplayTelemetryPurpose);
+            IndieablePrivacyPurpose diagnosticsPurpose =
+                _manifest.FindPurpose(
+                    Indieable.DiagnosticsPurpose);
+            _telemetryAvailable = telemetryPurpose != null &&
+                                  telemetryPurpose.Enabled;
+            _diagnosticsAvailable = diagnosticsPurpose != null &&
+                                    diagnosticsPurpose.Enabled;
+            ConfigurePurpose(
+                telemetryPurpose,
                 _telemetryToggle,
                 _telemetryDescription,
                 "Structured gameplay facts used to understand how the " +
                 "game plays.");
             ConfigurePurpose(
-                _manifest.FindPurpose(
-                    Indieable.DiagnosticsPurpose),
+                diagnosticsPurpose,
                 _diagnosticsToggle,
                 _diagnosticsDescription,
                 "Optional technical facts used to understand failures.");
@@ -364,18 +377,14 @@ namespace IndieableSdk
         {
             _busy = busy;
             if (_status != null) _status.text = message ?? "";
-            _telemetryToggle?.SetEnabled(!busy);
-            _diagnosticsToggle?.SetEnabled(!busy);
-            _decline?.SetEnabled(!busy);
-            _save?.SetEnabled(!busy);
-        }
-
-        private void RefreshCloseVisibility()
-        {
-            if (_close == null) return;
-            _close.style.display = _initialPrompt
-                ? DisplayStyle.None
-                : DisplayStyle.Flex;
+            bool choicesEnabled = !busy && _canChoose;
+            _telemetryToggle?.SetEnabled(
+                choicesEnabled && _telemetryAvailable);
+            _diagnosticsToggle?.SetEnabled(
+                choicesEnabled && _diagnosticsAvailable);
+            _decline?.SetEnabled(choicesEnabled);
+            _save?.SetEnabled(choicesEnabled);
+            _retry?.SetEnabled(!busy);
         }
 
         private void ReleaseVisibility()

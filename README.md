@@ -17,8 +17,8 @@ credentials, or deployment configuration.
 
 | Channel | Intended use | Version form |
 |---|---|---|
-| **Stable** | Normal development and production integration | `0.5.1` |
-| **Nightly** | Indieable development, early integration, and Unity testing | `0.5.1-nightly.YYYYMMDD.RUN` |
+| **Stable** | Normal development and production integration | `0.6.0` |
+| **Nightly** | Indieable development, early integration, and Unity testing | `0.6.0-nightly.YYYYMMDD.RUN` |
 
 - [Stable and historical releases](../../releases)
 - [Current Nightly release](../../releases/tag/nightly)
@@ -37,7 +37,7 @@ Window → Package Manager → + → Add package from tarball…
 A public tagged version can also be installed through:
 
 ```text
-https://github.com/hotboxed-studios/indieable-sdk.git#v0.5.1
+https://github.com/hotboxed-studios/indieable-sdk.git#v0.6.0
 ```
 
 For current integration testing:
@@ -80,6 +80,13 @@ Sample Gameplay Systems
   Player Lifecycle
 ```
 
+The imported `Config/IndieableSampleUiToolkitAssets.asset` references editable
+copies of the consent, feedback, bug-report, and runtime-theme assets under the
+sample's `UI/` folder. The scene applies that asset set from `Awake`, before the
+SDK's first-scene consent callback. Edit those imported UXML/USS/TSS files to
+change the sample presentation. Projects that do not configure an override use
+the packaged themed defaults.
+
 The game-domain components publish events such as `DoorOpened`,
 `WorkorderDone`, `NodeClosed`, `PlayerDied`, and `RunCompleted` to
 `GlobalEventBus`. They do not call Indieable directly. A routing ScriptableObject
@@ -109,10 +116,12 @@ The Public Game Key is a client credential; never enter a Server Secret.
 New settings use `https://preview.indieable.com` and `development`, but remain
 disabled until a Public Game Key is supplied. With **Initialize Automatically**
 enabled, the SDK loads these settings before the first scene's `Awake`. With
-**Show Startup Consent** enabled, its built-in UI Toolkit form opens after the
-first scene loads and only returns for a new notice version until the Player
-makes an explicit choice. Closing, failing, batch mode, and headless runs never
-mark the notice as answered.
+**Show Startup Consent** enabled, its built-in bottom-right UI Toolkit card opens
+after the first scene loads and only returns for a new notice version until the
+Player explicitly saves or declines. It has no dismiss-only action. Failed,
+batch-mode, and headless attempts never mark the notice as answered. Feedback
+and Bug Report use the same bounded bottom-right presentation and remain visible
+until the Player sends, cancels, or closes a completed/error state.
 
 ## Global event bus
 

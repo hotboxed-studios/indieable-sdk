@@ -47,11 +47,6 @@ public sealed class IndieableQuickStart : MonoBehaviour
             Indieable.OpenFeedback();
         if (Input.GetKeyDown(KeyCode.F9))
             Indieable.OpenBugReport();
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            Indieable.ClosePrivacyPreferences();
-            Indieable.CloseFeedback();
-        }
     }
 
     private void OnSessionConnected(IndieableSessionInfo session)

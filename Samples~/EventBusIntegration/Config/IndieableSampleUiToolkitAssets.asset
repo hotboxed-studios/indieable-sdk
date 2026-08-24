@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbfdd8ac2a034d3a9ae7253f6053fb44, type: 3}
+  m_Name: IndieableSampleUiToolkitAssets
+  m_EditorClassIdentifier: Indieable.Runtime::IndieableSdk.IndieableUiToolkitAssets
+  themeStyleSheet: {fileID: -4733365628477956816, guid: 55e2abdd85d14f6bb1e6bb8cfe652e18, type: 3}
+  privacyLayout: {fileID: 9197481963319205126, guid: 11a232c8315b433a83dc8d0d43bf919f, type: 3}
+  privacyStyles: {fileID: 7433441132597879392, guid: 22b69d36010a464e8f601300049ce9af, type: 3}
+  feedbackLayout: {fileID: 9197481963319205126, guid: 33c3843178534222be2d77c1fab39f5f, type: 3}
+  feedbackStyles: {fileID: 7433441132597879392, guid: 44d9cc59143f4c41bc9cb1105598c565, type: 3}
