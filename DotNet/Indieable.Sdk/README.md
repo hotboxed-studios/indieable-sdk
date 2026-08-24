@@ -32,13 +32,13 @@ var options = new IndieableClientOptions
     BaseUrl = "https://preview.indieable.com",
     PublicGameKey = "ind_pub_replace_me"
 };
-var vercelBypass = Environment.GetEnvironmentVariable(
-    "VERCEL_AUTOMATION_BYPASS_SECRET");
-if (!string.IsNullOrWhiteSpace(vercelBypass))
+var optionalHeader = Environment.GetEnvironmentVariable(
+    "INDIEABLE_OPTIONAL_HEADER");
+if (!string.IsNullOrWhiteSpace(optionalHeader))
 {
     options.RequestHeaders.Add(
-        "x-vercel-protection-bypass",
-        vercelBypass);
+        "x-client-variant",
+        optionalHeader);
 }
 await using var indieable = new IndieableClient(options);
 ```

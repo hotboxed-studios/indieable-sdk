@@ -22,6 +22,8 @@ namespace IndieableSdk
         [SerializeField] private string publicGameKey = "";
         [SerializeField] private string environment = "development";
         [SerializeField] private string localProfileRef = "";
+        [SerializeField] private bool autoInitialize = true;
+        [SerializeField] private bool showStartupConsent = true;
         [SerializeField, Min(1)] private int requestTimeoutSeconds = 15;
         [SerializeField, Range(0, 10)] private int maxTransientRetries = 2;
         [SerializeField] private bool logErrors = true;
@@ -34,6 +36,8 @@ namespace IndieableSdk
         public string PublicGameKey => (publicGameKey ?? "").Trim();
         public string Environment => (environment ?? "").Trim();
         public string LocalProfileRef => (localProfileRef ?? "").Trim();
+        public bool AutoInitialize => autoInitialize;
+        public bool ShowStartupConsent => showStartupConsent;
         public int RequestTimeoutSeconds =>
             Mathf.Clamp(requestTimeoutSeconds, 1, 120);
         public int MaxTransientRetries =>

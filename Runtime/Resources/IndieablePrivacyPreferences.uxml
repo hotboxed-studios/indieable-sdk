@@ -1,0 +1,37 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="privacy-root" class="privacy-root">
+        <ui:VisualElement class="privacy-card">
+            <ui:VisualElement class="privacy-header">
+                <ui:VisualElement class="privacy-grow">
+                    <ui:Label text="OPTIONAL PLAYER DATA" class="privacy-eyebrow" />
+                    <ui:Label name="game-title" text="Game privacy notice" class="privacy-title" />
+                </ui:VisualElement>
+                <ui:Button name="close" text="Close" class="privacy-button privacy-compact" />
+            </ui:VisualElement>
+
+            <ui:ScrollView class="privacy-scroll">
+                <ui:Label name="controller" text="Controller information has not loaded." class="privacy-copy" />
+                <ui:Label name="notice" text="Loading the published notice…" class="privacy-note" />
+                <ui:Button name="privacy-policy" text="Open privacy policy" class="privacy-button" />
+
+                <ui:VisualElement class="privacy-purpose">
+                    <ui:Toggle name="telemetry-toggle" label="Allow gameplay telemetry" value="false" />
+                    <ui:Label name="telemetry-description" text="Structured gameplay facts." class="privacy-purpose-copy" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="privacy-purpose">
+                    <ui:Toggle name="diagnostics-toggle" label="Allow optional diagnostics" value="false" />
+                    <ui:Label name="diagnostics-description" text="Optional technical facts." class="privacy-purpose-copy" />
+                </ui:VisualElement>
+
+                <ui:Label text="Declining does not stop ordinary gameplay. Account linking, feedback, bug reports, Challenges, and marketing are separate decisions. You can change these choices later from Player Data in the game's settings." class="privacy-note" />
+                <ui:Label name="status" text="Loading privacy notice…" class="privacy-status" />
+            </ui:ScrollView>
+
+            <ui:VisualElement class="privacy-actions">
+                <ui:Button name="decline" text="Continue without optional data" class="privacy-button privacy-action" />
+                <ui:Button name="save" text="Save selected choices" class="privacy-button privacy-primary privacy-action" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

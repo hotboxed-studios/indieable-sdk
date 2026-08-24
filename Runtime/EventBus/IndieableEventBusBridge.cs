@@ -57,6 +57,9 @@ namespace IndieableSdk.EventBus
         private void OnEnable()
         {
             _enabled = true;
+            Indieable.SessionConnected += OnSessionConnected;
+            Indieable.PrivacyPreferencesChanged +=
+                ApplyPrivacyPreferences;
             Subscribe();
             if (refreshPrivacyPreferencesOnEnable && Indieable.IsConnected)
                 RefreshPrivacyPreferences();
@@ -65,12 +68,23 @@ namespace IndieableSdk.EventBus
         private void OnDisable()
         {
             _enabled = false;
+            Indieable.SessionConnected -= OnSessionConnected;
+            Indieable.PrivacyPreferencesChanged -=
+                ApplyPrivacyPreferences;
+            _telemetryGranted = false;
+            _diagnosticsGranted = false;
             if (_subscription != null)
             {
                 _subscription.Dispose();
                 _subscription = null;
             }
             ClearPending("bridge disabled");
+        }
+
+        private void OnSessionConnected(IndieableSessionInfo _)
+        {
+            if (_enabled && refreshPrivacyPreferencesOnEnable)
+                RefreshPrivacyPreferences();
         }
 
         private void Update()

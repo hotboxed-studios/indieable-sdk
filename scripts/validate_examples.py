@@ -114,11 +114,9 @@ def main() -> int:
             controller,
             (
                 "UnityEngine.UIElements",
-                'PlaceholderPublicKey = "ind_pub_replace_me"',
-                "_telemetryToggle.value = false",
-                "_diagnosticsToggle.value = false",
                 "GlobalEventBus.SubscribeAll",
                 "eventBusBridge.ApplyPrivacyPreferences",
+                "Indieable.OpenPrivacyPreferences",
                 "Indieable.SendEvent",
             ),
             "sample controller",
@@ -128,6 +126,11 @@ def main() -> int:
             errors.append(
                 "sample controller auto-creates itself instead "
                 "of using the imported scene"
+            )
+        if "Indieable.Initialize" in controller:
+            errors.append(
+                "sample controller must use the project-settings "
+                "auto bootstrap instead of initializing the SDK"
             )
         if (
             "SystemInfo.deviceUniqueIdentifier" in controller
@@ -155,14 +158,8 @@ def main() -> int:
         require_markers(
             uxml,
             (
-                'name="telemetry-toggle" '
-                'label="Allow gameplay telemetry" value="false"',
-                'name="diagnostics-toggle" '
-                'label="Allow optional diagnostics" value="false"',
-                'name="permission-decline" '
-                'text="Continue without optional data"',
-                'name="permission-save" '
-                'text="Allow selected"',
+                'name="open-permissions" '
+                'text="Open built-in Player Data"',
                 'name="door-open"',
                 'name="workorder-done"',
                 'name="node-close"',
@@ -172,26 +169,10 @@ def main() -> int:
             "sample UXML",
             errors,
         )
-        if uxml.count("permission-action") < 2:
+        if 'name="permission-overlay"' in uxml:
             errors.append(
-                "both permission actions must share the "
-                "permission-action class"
-            )
-
-    uss_path = (
-        RESOURCES / "IndieableEventBusSample.uss"
-    )
-    if uss_path.is_file():
-        uss = uss_path.read_text(
-            encoding="utf-8"
-        )
-        if (
-            ".permission-action" not in uss
-            or "flex-grow: 1" not in uss
-            or "flex-basis: 0" not in uss
-        ):
-            errors.append(
-                "permission actions do not have equal-width treatment"
+                "sample must use the SDK-owned privacy UI instead "
+                "of shipping a competing permission overlay"
             )
 
     scene_path = (

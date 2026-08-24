@@ -79,12 +79,33 @@ namespace UnityEngine
 
     public static class Application
     {
+        public static bool isBatchMode { get; set; }
         public static RuntimePlatform platform { get; set; }
         public static string persistentDataPath { get; set; } = string.Empty;
         public static string unityVersion { get; set; } = string.Empty;
         public static string version { get; set; } = string.Empty;
         public static SystemLanguage systemLanguage { get; set; }
         public static void OpenURL(string url) { }
+    }
+
+    public static class PlayerPrefs
+    {
+        public static int GetInt(string key, int defaultValue = 0)
+        {
+            return defaultValue;
+        }
+
+        public static void SetInt(string key, int value) { }
+        public static void Save() { }
+    }
+
+    public static class SystemInfo
+    {
+        public static Rendering.GraphicsDeviceType graphicsDeviceType
+        {
+            get;
+            set;
+        }
     }
 
     public static class JsonUtility
@@ -270,12 +291,34 @@ namespace UnityEngine
         public static bool GetKeyDown(KeyCode key) { return false; }
     }
 
+    public static class Cursor
+    {
+        public static bool visible { get; set; }
+        public static CursorLockMode lockState { get; set; }
+    }
+
+    public enum CursorLockMode
+    {
+        None,
+        Locked,
+        Confined
+    }
+
     public enum KeyCode
     {
         F7,
         F8,
         F9,
         Escape
+    }
+}
+
+namespace UnityEngine.Rendering
+{
+    public enum GraphicsDeviceType
+    {
+        Null,
+        Direct3D11
     }
 }
 

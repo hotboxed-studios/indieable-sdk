@@ -13,17 +13,13 @@
                 </ui:VisualElement>
 
                 <ui:VisualElement class="card">
-                    <ui:Label text="1 · Preview configuration" class="section-title" />
-                    <ui:Label text="Only the Public Game Key belongs in a client. Initialize is local; loading the notice creates no session or persistent identifier." class="section-copy" />
-                    <ui:TextField name="base-url" label="Base URL" />
-                    <ui:TextField name="public-game-key" label="Public Game Key" />
-                    <ui:TextField name="environment" label="Environment" />
-                    <ui:TextField name="local-profile" label="Opaque local profile (optional)" />
+                    <ui:Label text="1 · Project settings and consent" class="section-title" />
+                    <ui:Label text="Project Settings > Indieable is the only configuration source. The SDK initializes before scene Awake and shows its built-in UI Toolkit consent form after the first scene loads." class="section-copy" />
                     <ui:VisualElement class="button-row">
-                        <ui:Button name="initialize" text="Initialize locally" class="button primary" />
+                        <ui:Button name="initialize" text="Verify auto initialization" class="button primary" />
                         <ui:Button name="load-manifest" text="Load privacy notice" class="button" />
                         <ui:Button name="connect" text="Connect session" class="button" />
-                        <ui:Button name="open-permissions" text="Review permissions" class="button" />
+                        <ui:Button name="open-permissions" text="Open built-in Player Data" class="button" />
                     </ui:VisualElement>
                 </ui:VisualElement>
 
@@ -64,37 +60,5 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:ScrollView>
-
-        <ui:VisualElement name="permission-overlay" class="modal-overlay">
-            <ui:VisualElement class="modal-card">
-                <ui:VisualElement class="modal-header">
-                    <ui:VisualElement class="grow">
-                        <ui:Label text="OPTIONAL PLAYER DATA" class="eyebrow" />
-                        <ui:Label text="Choose each purpose separately" class="modal-title" />
-                    </ui:VisualElement>
-                    <ui:Button name="permission-close" text="Close" class="button compact" />
-                </ui:VisualElement>
-
-                <ui:Label name="permission-controller" text="Controller information has not loaded." class="section-copy" />
-                <ui:Label name="permission-notice" text="Load the published notice before choosing." class="note" />
-
-                <ui:VisualElement class="permission-card">
-                    <ui:Toggle name="telemetry-toggle" label="Allow gameplay telemetry" value="false" />
-                    <ui:Label name="telemetry-description" text="Structured gameplay facts." class="permission-copy" />
-                </ui:VisualElement>
-
-                <ui:VisualElement class="permission-card">
-                    <ui:Toggle name="diagnostics-toggle" label="Allow optional diagnostics" value="false" />
-                    <ui:Label name="diagnostics-description" text="Optional technical facts." class="permission-copy" />
-                </ui:VisualElement>
-
-                <ui:Label text="Declining does not stop ordinary gameplay. Account linking, forms, Challenges, and marketing are separate decisions. Choices can be changed later." class="note" />
-
-                <ui:VisualElement class="permission-actions">
-                    <ui:Button name="permission-decline" text="Continue without optional data" class="button permission-action" />
-                    <ui:Button name="permission-save" text="Allow selected" class="button primary permission-action" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

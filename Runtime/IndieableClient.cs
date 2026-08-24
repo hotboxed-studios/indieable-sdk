@@ -20,6 +20,30 @@ namespace IndieableSdk
         internal IndieableSessionInfo Session { get { return _session; } }
         internal IndieableOptions Options { get { return _options; } }
 
+        internal bool MatchesOptions(IndieableOptions options)
+        {
+            if (options == null) return false;
+            return Same(
+                       _options.BaseUrl,
+                       options.BaseUrl,
+                       true) &&
+                   Same(
+                       _options.PublicGameKey,
+                       options.PublicGameKey,
+                       false) &&
+                   Same(
+                       _options.Environment,
+                       options.Environment,
+                       true) &&
+                   Same(
+                       _options.LocalProfileRef,
+                       options.LocalProfileRef,
+                       false) &&
+                   HeadersMatch(
+                       _options.RequestHeaders,
+                       options.RequestHeaders);
+        }
+
         internal IndieableClient(IndieableOptions options)
         {
             _options = options;
@@ -551,6 +575,7 @@ namespace IndieableSdk
 
         internal void NotifyFeedbackVisibility(bool visible)
         {
+            Indieable.NotifyFeedbackVisibility(visible);
             if (_options.FeedbackVisibilityChanged == null) return;
             try { _options.FeedbackVisibilityChanged(visible); }
             catch (Exception exception)
@@ -561,6 +586,7 @@ namespace IndieableSdk
 
         internal void NotifyPrivacyVisibility(bool visible)
         {
+            Indieable.NotifyPrivacyVisibility(visible);
             if (_options.PrivacyVisibilityChanged == null) return;
             try { _options.PrivacyVisibilityChanged(visible); }
             catch (Exception exception)
@@ -839,6 +865,50 @@ namespace IndieableSdk
         }
 
         private string BuildUrl(string path) { return (_options.BaseUrl ?? "https://indieable.com").TrimEnd('/') + path; }
+
+        private static bool HeadersMatch(
+            IndieableRequestHeader[] left,
+            IndieableRequestHeader[] right)
+        {
+            left = left ?? new IndieableRequestHeader[0];
+            right = right ?? new IndieableRequestHeader[0];
+            if (left.Length != right.Length) return false;
+            for (var index = 0; index < left.Length; index++)
+            {
+                var a = left[index];
+                var b = right[index];
+                if (a == null || b == null)
+                {
+                    if (!ReferenceEquals(a, b)) return false;
+                    continue;
+                }
+
+                if (a.Enabled != b.Enabled ||
+                    !Same(a.Name, b.Name, true) ||
+                    !Same(a.Value, b.Value, false) ||
+                    !Same(
+                        a.ValueEnvironmentVariable,
+                        b.ValueEnvironmentVariable,
+                        false))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static bool Same(
+            string left,
+            string right,
+            bool ignoreCase)
+        {
+            return string.Equals(
+                (left ?? "").Trim(),
+                (right ?? "").Trim(),
+                ignoreCase
+                    ? StringComparison.OrdinalIgnoreCase
+                    : StringComparison.Ordinal);
+        }
 
         private void Fail(Action<IndieableError> onError, IndieableError error)
         {

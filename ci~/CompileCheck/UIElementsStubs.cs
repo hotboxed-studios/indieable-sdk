@@ -14,7 +14,9 @@ namespace UnityEngine
 
     public enum RuntimeInitializeLoadType
     {
-        AfterSceneLoad
+        AfterSceneLoad,
+        BeforeSceneLoad,
+        SubsystemRegistration
     }
 
     public class ScriptableObject : Object

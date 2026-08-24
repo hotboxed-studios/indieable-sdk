@@ -5,25 +5,10 @@ namespace IndieableSdk
     [Serializable]
     public sealed class IndieableRequestHeader
     {
-        public const string VercelProtectionBypassHeader =
-            "x-vercel-protection-bypass";
-        public const string VercelProtectionBypassEnvironmentVariable =
-            "VERCEL_AUTOMATION_BYPASS_SECRET";
-
         public bool Enabled = true;
         public string Name = "";
         public string Value = "";
         public string ValueEnvironmentVariable = "";
-
-        public static IndieableRequestHeader CreateVercelProtectionBypass()
-        {
-            return new IndieableRequestHeader
-            {
-                Name = VercelProtectionBypassHeader,
-                ValueEnvironmentVariable =
-                    VercelProtectionBypassEnvironmentVariable
-            };
-        }
 
         internal bool TryValidate(out string issue)
         {
@@ -140,7 +125,7 @@ namespace IndieableSdk
     {
         public string BaseUrl = "https://indieable.com";
         public string PublicGameKey = "";
-        public string SdkVersion = "unity-0.4.2";
+        public string SdkVersion = "unity-0.5.0";
         public string BuildVersion = "";
         public string Platform = "";
         public string Environment = "production";

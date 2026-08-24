@@ -25,6 +25,11 @@ namespace IndieableSdk
             if (routine != null) StartCoroutine(routine);
         }
 
+        internal static void ResetForRuntimeStartup()
+        {
+            _instance = null;
+        }
+
         private void OnDestroy()
         {
             if (_instance == this) _instance = null;

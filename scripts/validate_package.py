@@ -28,6 +28,7 @@ REQUIRED_PATHS = [
     "Editor/IndieableProjectSettingsProvider.cs",
     "Runtime/Indieable.Runtime.asmdef",
     "Runtime/Indieable.cs",
+    "Runtime/IndieableAutoBootstrap.cs",
     "Runtime/IndieableClient.cs",
     "Runtime/IndieableFeedbackUI.cs",
     "Runtime/IndieableIdentityStorage.cs",
@@ -36,6 +37,8 @@ REQUIRED_PATHS = [
     "Runtime/IndieableProjectSettings.cs",
     "Runtime/IndieableRuntime.cs",
     "Runtime/IndieableTelemetry.cs",
+    "Runtime/Resources/IndieablePrivacyPreferences.uxml",
+    "Runtime/Resources/IndieablePrivacyPreferences.uss",
     "Runtime/Steam/IIndieableSteamTicketProvider.cs",
     "Runtime/Events/GlobalEventBus.cs",
     "Runtime/Events/IndieableEventContext.cs",
@@ -339,8 +342,6 @@ def validate(root: Path) -> list[str]:
         root / "Runtime/IndieableModels.cs",
         (
             "public sealed class IndieableRequestHeader",
-            "x-vercel-protection-bypass",
-            "VERCEL_AUTOMATION_BYPASS_SECRET",
             "TryResolve",
         ),
         errors,
@@ -357,11 +358,49 @@ def validate(root: Path) -> list[str]:
         root / "Editor/IndieableProjectSettingsProvider.cs",
         (
             "Optional Request Headers",
-            "Add Vercel Protection Bypass",
-            "VercelProtectionBypassEnvironmentVariable",
+            "Initialize Automatically",
+            "Show Startup Consent",
         ),
         errors,
     )
+    require_markers(
+        root / "Runtime/IndieableAutoBootstrap.cs",
+        (
+            "RuntimeInitializeLoadType.SubsystemRegistration",
+            "RuntimeInitializeLoadType.BeforeSceneLoad",
+            "RuntimeInitializeLoadType.AfterSceneLoad",
+            "RequestAutomatic",
+            "ShouldSuppressAutomaticUi",
+        ),
+        errors,
+    )
+    require_markers(
+        root / "Runtime/IndieablePrivacyUI.cs",
+        (
+            "UnityEngine.UIElements",
+            "IndieablePrivacyPreferences",
+            "SaveChoices",
+            "RecordDecision",
+        ),
+        errors,
+    )
+
+    provider_specific_text = "\n".join(
+        path.read_text(encoding="utf-8", errors="replace")
+        for package_dir in ("Runtime", "Editor", "Samples~", "Tests")
+        for path in (root / package_dir).rglob("*")
+        if path.is_file() and not path.name.endswith(".meta")
+    )
+    for removed in (
+        "x-vercel-protection-bypass",
+        "VERCEL_AUTOMATION_BYPASS_SECRET",
+        "Add Vercel Protection Bypass",
+    ):
+        if removed in provider_specific_text:
+            errors.append(
+                "package still contains removed hosting-provider preset: "
+                + removed
+            )
 
     models_path = root / "Runtime/IndieableModels.cs"
     if models_path.is_file() and version:
@@ -390,13 +429,13 @@ def validate(root: Path) -> list[str]:
         sample_text = quick_start.read_text(
             encoding="utf-8"
         )
-        if (
-            'publicGameKey = "ind_pub_replace_me"'
-            not in sample_text
-        ):
+        if "Indieable.Initialize" in sample_text:
             errors.append(
-                "Quick Start must contain only the documented "
-                "placeholder Public Game Key"
+                "Quick Start must use SDK automatic initialization"
+            )
+        if "PrivacyVisibilityChanged" not in sample_text:
+            errors.append(
+                "Quick Start must demonstrate SDK UI visibility handling"
             )
         if re.search(
             r"ind_(?:sec|srv)_[A-Za-z0-9_-]+",
@@ -491,6 +530,10 @@ def validate(root: Path) -> list[str]:
         controller = controller_path.read_text(
             encoding="utf-8"
         )
+        if "Indieable.Initialize" in controller:
+            errors.append(
+                "Event Bus sample must use SDK automatic initialization"
+            )
         if (
             "SystemInfo.deviceUniqueIdentifier" in controller
             or "Time.timeScale" in controller

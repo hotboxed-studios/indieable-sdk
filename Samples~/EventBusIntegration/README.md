@@ -68,10 +68,9 @@ a hidden backlog and send old activity later.
 
 ## Configure Preview
 
-1. Either paste the game's Preview **Public Game Key** into the sample UI, or
-   create the shared project asset from
-   `Tools → Indieable → Open Settings`. The sample automatically reads that
-   asset when present and still creates all runtime UI itself.
+1. Create the shared project asset from
+   `Tools → Indieable → Open Settings` and paste the game's Preview
+   **Public Game Key** there. This is the sample's only configuration source.
 2. Keep `https://preview.indieable.com` and `development` for Preview testing.
 3. In Indieable, register the exact event schemas you want to test:
 
@@ -104,8 +103,10 @@ run_completed
 ```
 
 4. Publish the game's Player Data notice.
-5. Enter Play Mode, initialize locally, load the notice, connect, and review the
-   separate telemetry/diagnostics choices.
+5. Enter Play Mode. The SDK initializes before scene `Awake` and opens its
+   built-in UI Toolkit consent form after the first scene loads. Declining or
+   saving selected purposes records the choice for the current notice version;
+   dismissing or failing to load it does not.
 6. Fire sample gameplay events and inspect the local activity log and Indieable
    Connect console.
 

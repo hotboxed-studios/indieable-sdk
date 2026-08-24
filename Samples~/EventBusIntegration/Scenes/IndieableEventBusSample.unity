@@ -245,10 +245,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab1c3b19395b4f5eab4c55eac9dba422, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  baseUrl: https://preview.indieable.com
-  publicGameKey: ind_pub_replace_me
-  environment: development
-  localProfileRef:
   eventBusBridge: {fileID: 1003}
   door: {fileID: 2202}
   workorderTerminal: {fileID: 2302}

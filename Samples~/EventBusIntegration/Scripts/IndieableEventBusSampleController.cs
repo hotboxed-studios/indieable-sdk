@@ -13,14 +13,6 @@ namespace IndieableSdk.Samples.EventBus
     public sealed class IndieableEventBusSampleController : MonoBehaviour
     {
         private const string ResourceName = "IndieableEventBusSample";
-        private const string PlaceholderPublicKey = "ind_pub_replace_me";
-
-        [Header("Preview configuration")]
-        [SerializeField] private string baseUrl = "https://preview.indieable.com";
-        [SerializeField] private string publicGameKey = PlaceholderPublicKey;
-        [SerializeField] private string environment = "development";
-        [SerializeField] private string localProfileRef = "";
-
         [Header("Integration")]
         [SerializeField] private IndieableEventBusBridge eventBusBridge;
 
@@ -35,13 +27,8 @@ namespace IndieableSdk.Samples.EventBus
         private PanelSettings _panelSettings;
         private IDisposable _localEventSubscription;
         private IndieablePrivacyManifest _manifest;
-        private IndieablePrivacyPreferences _preferences;
         private IndieableProjectSettings _projectSettings;
 
-        private TextField _baseUrlField;
-        private TextField _publicGameKeyField;
-        private TextField _environmentField;
-        private TextField _localProfileField;
         private TextField _challengeSlugField;
 
         private Label _sdkState;
@@ -49,14 +36,6 @@ namespace IndieableSdk.Samples.EventBus
         private Label _routingState;
         private Label _challengeState;
         private ScrollView _activityLog;
-
-        private VisualElement _permissionOverlay;
-        private Label _permissionController;
-        private Label _permissionNotice;
-        private Label _telemetryDescription;
-        private Label _diagnosticsDescription;
-        private Toggle _telemetryToggle;
-        private Toggle _diagnosticsToggle;
 
         private bool _busy;
 
@@ -122,10 +101,6 @@ namespace IndieableSdk.Samples.EventBus
         {
             var root = _document.rootVisualElement;
 
-            _baseUrlField = Require<TextField>(root, "base-url");
-            _publicGameKeyField = Require<TextField>(root, "public-game-key");
-            _environmentField = Require<TextField>(root, "environment");
-            _localProfileField = Require<TextField>(root, "local-profile");
             _challengeSlugField = Require<TextField>(root, "challenge-slug");
 
             _sdkState = Require<Label>(root, "sdk-state");
@@ -134,13 +109,6 @@ namespace IndieableSdk.Samples.EventBus
             _challengeState = Require<Label>(root, "challenge-state");
             _activityLog = Require<ScrollView>(root, "activity-log");
 
-            _permissionOverlay = Require<VisualElement>(root, "permission-overlay");
-            _permissionController = Require<Label>(root, "permission-controller");
-            _permissionNotice = Require<Label>(root, "permission-notice");
-            _telemetryDescription = Require<Label>(root, "telemetry-description");
-            _diagnosticsDescription = Require<Label>(root, "diagnostics-description");
-            _telemetryToggle = Require<Toggle>(root, "telemetry-toggle");
-            _diagnosticsToggle = Require<Toggle>(root, "diagnostics-toggle");
         }
 
         private void BindActions()
@@ -153,7 +121,8 @@ namespace IndieableSdk.Samples.EventBus
                 LoadManifest(null);
             };
             Require<Button>(root, "connect").clicked += Connect;
-            Require<Button>(root, "open-permissions").clicked += OpenPermissionDialog;
+            Require<Button>(root, "open-permissions").clicked +=
+                Indieable.OpenPrivacyPreferences;
 
             Require<Button>(root, "door-open").clicked += delegate
             {
@@ -198,32 +167,14 @@ namespace IndieableSdk.Samples.EventBus
             Require<Button>(root, "join-challenge").clicked += JoinChallenge;
             Require<Button>(root, "reset-identity").clicked += ResetIdentity;
 
-            Require<Button>(root, "permission-close").clicked += ClosePermissionDialog;
-            Require<Button>(root, "permission-decline").clicked += delegate
-            {
-                _telemetryToggle.value = false;
-                _diagnosticsToggle.value = false;
-                SavePermissionChoices();
-            };
-            Require<Button>(root, "permission-save").clicked += SavePermissionChoices;
         }
 
         private void SetDefaultValues()
         {
-            if (_baseUrlField == null) return;
-
             _projectSettings =
                 IndieableProjectSettings.Load();
             if (_projectSettings != null)
             {
-                baseUrl = _projectSettings.BaseUrl;
-                environment = _projectSettings.Environment;
-                localProfileRef = _projectSettings.LocalProfileRef;
-                if (!string.IsNullOrWhiteSpace(
-                        _projectSettings.PublicGameKey))
-                {
-                    publicGameKey = _projectSettings.PublicGameKey;
-                }
                 if (eventBusBridge != null &&
                     _projectSettings.EventRouting != null)
                 {
@@ -232,17 +183,7 @@ namespace IndieableSdk.Samples.EventBus
                 }
             }
 
-            _baseUrlField.value = baseUrl;
-            _publicGameKeyField.value = publicGameKey;
-            _environmentField.value = environment;
-            _localProfileField.value = localProfileRef;
             _challengeSlugField.value = "";
-
-            // Optional purposes are not preselected. Existing saved grants are
-            // reflected only after the Player connects and preferences are read.
-            _telemetryToggle.value = false;
-            _diagnosticsToggle.value = false;
-            _permissionOverlay.style.display = DisplayStyle.None;
         }
 
         private void BindLocalBus()
@@ -297,49 +238,18 @@ namespace IndieableSdk.Samples.EventBus
         private void InitializeSdk()
         {
             if (_busy) return;
-
-            var key = (_publicGameKeyField.value ?? "").Trim();
-            if (string.IsNullOrEmpty(key) || key == PlaceholderPublicKey)
-            {
-                Log("Enter a Preview Public Game Key before initializing.", true);
-                return;
-            }
-
-            IndieableOptions options = _projectSettings != null
-                ? _projectSettings.CreateOptions()
-                : new IndieableOptions();
-            options.BaseUrl = (_baseUrlField.value ?? "").Trim();
-            options.PublicGameKey = key;
-            options.BuildVersion = Application.version;
-            options.Environment = string.IsNullOrWhiteSpace(
-                    _environmentField.value)
-                ? "development"
-                : _environmentField.value.Trim();
-            options.Engine = "Unity";
-            options.EngineVersion = Application.unityVersion;
-            options.Platform = Application.platform.ToString();
-            options.LocalProfileRef =
-                (_localProfileField.value ?? "").Trim();
-            options.LogErrors = true;
-            options.PrivacyVisibilityChanged = delegate(bool visible)
-            {
-                Log("SDK default privacy UI visible: " + visible + ".");
-            };
-            options.FeedbackVisibilityChanged = delegate(bool visible)
-            {
-                Log("SDK feedback UI visible: " + visible + ".");
-            };
-            Indieable.Initialize(options);
-
             if (!Indieable.IsInitialized)
             {
                 Log(
-                    "Initialization was rejected. Check the Base URL and Public Game Key.",
+                    "SDK is not initialized. Configure Project Settings > " +
+                    "Indieable and re-enter Play Mode.",
                     true);
                 return;
             }
 
-            Log("SDK initialized locally. Initialize made no network request.");
+            Log(
+                "SDK was initialized automatically before scene Awake. " +
+                "No sample component owns initialization.");
             UpdateStateLabels();
         }
 
@@ -347,7 +257,7 @@ namespace IndieableSdk.Samples.EventBus
         {
             if (Indieable.IsInitialized) return true;
             InitializeSdk();
-            return Indieable.IsInitialized;
+            return false;
         }
 
         private void LoadManifest(Action after)
@@ -364,7 +274,6 @@ namespace IndieableSdk.Samples.EventBus
                         manifest.Configured
                             ? "Privacy notice loaded without creating a session."
                             : "This game has not published a Player Data notice.");
-                    PopulatePermissionDialog();
                     if (after != null) after();
                 },
                 HandleError);
@@ -382,13 +291,7 @@ namespace IndieableSdk.Samples.EventBus
                         false,
                         "Connected as " + Safe(session.IdentityState) + ".");
                     UpdateStateLabels();
-                    RefreshPreferences(delegate
-                    {
-                        if (_manifest == null)
-                            LoadManifest(OpenPermissionDialog);
-                        else
-                            OpenPermissionDialog();
-                    });
+                    RefreshPreferences(null);
                 },
                 HandleError);
         }
@@ -442,154 +345,10 @@ namespace IndieableSdk.Samples.EventBus
 
         private void ApplyPreferences(IndieablePrivacyPreferences preferences)
         {
-            _preferences = preferences;
-
-            if (preferences == null)
-            {
-                _telemetryToggle.value = false;
-                _diagnosticsToggle.value = false;
-            }
-            else
-            {
-                _telemetryToggle.value =
-                    preferences.IsGranted(Indieable.GameplayTelemetryPurpose);
-                _diagnosticsToggle.value =
-                    preferences.IsGranted(Indieable.DiagnosticsPurpose);
-            }
-
             if (eventBusBridge != null)
                 eventBusBridge.ApplyPrivacyPreferences(preferences);
 
             UpdateStateLabels();
-        }
-
-        private void OpenPermissionDialog()
-        {
-            if (_manifest == null)
-            {
-                LoadManifest(OpenPermissionDialog);
-                return;
-            }
-
-            PopulatePermissionDialog();
-            _permissionOverlay.style.display = DisplayStyle.Flex;
-        }
-
-        private void ClosePermissionDialog()
-        {
-            _permissionOverlay.style.display = DisplayStyle.None;
-        }
-
-        private void PopulatePermissionDialog()
-        {
-            if (_manifest == null) return;
-
-            var controller = _manifest.Controller;
-            _permissionController.text = controller == null
-                ? "Controller information has not been published."
-                : "Controller: " + Safe(controller.Name) +
-                  "\nPrivacy contact: " + Safe(controller.Contact);
-
-            _permissionNotice.text =
-                "Notice " + Safe(_manifest.NoticeVersion) +
-                " · " + Safe(_manifest.AudienceClassification) +
-                "\nOptional choices are separate from account linking, " +
-                "Challenges, forms, and marketing.";
-
-            ConfigurePurpose(
-                _manifest.FindPurpose(Indieable.GameplayTelemetryPurpose),
-                _telemetryToggle,
-                _telemetryDescription,
-                "Structured, schema-approved gameplay facts associated with " +
-                "this game's pseudonymous Player.");
-
-            ConfigurePurpose(
-                _manifest.FindPurpose(Indieable.DiagnosticsPurpose),
-                _diagnosticsToggle,
-                _diagnosticsDescription,
-                "Optional technical facts used to understand failures.");
-
-            if (_preferences != null)
-            {
-                _telemetryToggle.value =
-                    _preferences.IsGranted(Indieable.GameplayTelemetryPurpose);
-                _diagnosticsToggle.value =
-                    _preferences.IsGranted(Indieable.DiagnosticsPurpose);
-            }
-        }
-
-        private static void ConfigurePurpose(
-            IndieablePrivacyPurpose purpose,
-            Toggle toggle,
-            Label description,
-            string fallback)
-        {
-            if (purpose == null)
-            {
-                toggle.SetEnabled(false);
-                toggle.value = false;
-                description.text =
-                    fallback + "\nThis purpose is absent from the published notice.";
-                return;
-            }
-
-            toggle.SetEnabled(purpose.Enabled);
-            if (!purpose.Enabled) toggle.value = false;
-            description.text =
-                (string.IsNullOrWhiteSpace(purpose.Description)
-                    ? fallback
-                    : purpose.Description) +
-                (purpose.HasRetentionDays
-                    ? "\nRetention: up to " + purpose.RetentionDays + " days."
-                    : "");
-        }
-
-        private void SavePermissionChoices()
-        {
-            if (_busy) return;
-
-            EnsureConnected(delegate
-            {
-                SetBusy(true, "Saving optional Player Data choices...");
-                SavePreference(
-                    Indieable.GameplayTelemetryPurpose,
-                    _telemetryToggle.value,
-                    delegate
-                    {
-                        SavePreference(
-                            Indieable.DiagnosticsPurpose,
-                            _diagnosticsToggle.value,
-                            delegate
-                            {
-                                SetBusy(
-                                    false,
-                                    "Choices saved. Gameplay telemetry: " +
-                                    OnOff(_telemetryToggle.value) +
-                                    "; diagnostics: " +
-                                    OnOff(_diagnosticsToggle.value) + ".");
-                                ClosePermissionDialog();
-                                UpdateStateLabels();
-                            });
-                    });
-            });
-        }
-
-        private void SavePreference(
-            string purpose,
-            bool enabledValue,
-            Action after)
-        {
-            Indieable.SetPrivacyPreference(
-                purpose,
-                enabledValue,
-                delegate(IndieablePrivacyPreferences preferences)
-                {
-                    ApplyPreferences(preferences);
-                    if (after != null) after();
-                },
-                HandleError,
-                Application.systemLanguage.ToString(),
-                true);
         }
 
         private void SendDirectConnectTest()
@@ -794,11 +553,6 @@ namespace IndieableSdk.Samples.EventBus
         private static string Safe(string value)
         {
             return string.IsNullOrWhiteSpace(value) ? "unknown" : value;
-        }
-
-        private static string OnOff(bool value)
-        {
-            return value ? "on" : "off";
         }
 
         private static string EventName(GameEventEnvelope envelope)

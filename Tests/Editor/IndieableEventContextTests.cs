@@ -1,7 +1,9 @@
 using System;
 using IndieableSdk.Events;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace IndieableSdk.Tests
 {
@@ -77,6 +79,8 @@ namespace IndieableSdk.Tests
                     settings.BaseUrl,
                     Is.EqualTo("https://preview.indieable.com"));
                 Assert.That(settings.Environment, Is.EqualTo("development"));
+                Assert.That(settings.AutoInitialize, Is.True);
+                Assert.That(settings.ShowStartupConsent, Is.True);
                 Assert.That(settings.IsConfigured, Is.False);
                 Assert.That(settings.CreateOptions().PublicGameKey, Is.Empty);
             }
@@ -87,17 +91,19 @@ namespace IndieableSdk.Tests
         }
 
         [Test]
-        public void RequestHeader_VercelPresetResolvesOnlyFromEnvironment()
+        public void RequestHeader_ResolvesConfiguredEnvironmentVariable()
         {
-            const string testValue = "local-bypass-test";
-            string variable = IndieableRequestHeader
-                .VercelProtectionBypassEnvironmentVariable;
+            const string testValue = "local-header-test";
+            const string variable = "INDIEABLE_TEST_HEADER";
             string previous = Environment.GetEnvironmentVariable(variable);
             try
             {
                 Environment.SetEnvironmentVariable(variable, testValue);
-                IndieableRequestHeader header = IndieableRequestHeader
-                    .CreateVercelProtectionBypass();
+                var header = new IndieableRequestHeader
+                {
+                    Name = "x-indieable-test",
+                    ValueEnvironmentVariable = variable
+                };
 
                 Assert.That(header.Value, Is.Empty);
                 Assert.That(
@@ -108,7 +114,7 @@ namespace IndieableSdk.Tests
                     Is.True);
                 Assert.That(
                     name,
-                    Is.EqualTo("x-vercel-protection-bypass"));
+                    Is.EqualTo("x-indieable-test"));
                 Assert.That(value, Is.EqualTo(testValue));
             }
             finally
@@ -133,6 +139,102 @@ namespace IndieableSdk.Tests
 
             Assert.That(owned.TryValidate(out _), Is.False);
             Assert.That(newline.TryValidate(out _), Is.False);
+        }
+
+        [Test]
+        public void StartupConsent_StoresExplicitDecisionByNoticeVersion()
+        {
+            IndieableProjectSettings settings =
+                ScriptableObject.CreateInstance<IndieableProjectSettings>();
+            const string notice = "test-notice-v1";
+            try
+            {
+                var serialized = new SerializedObject(settings);
+                serialized.FindProperty("publicGameKey").stringValue =
+                    "ind_pub_test";
+                serialized.FindProperty("environment").stringValue =
+                    "development";
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+
+                string key = IndieableStartupConsent.BuildDecisionKey(
+                    settings,
+                    notice);
+                PlayerPrefs.DeleteKey(key + ".saved");
+                PlayerPrefs.DeleteKey(key + ".telemetry");
+                PlayerPrefs.DeleteKey(key + ".diagnostics");
+
+                Assert.That(
+                    IndieableStartupConsent.TryGetDecision(
+                        settings,
+                        notice,
+                        out _,
+                        out _),
+                    Is.False);
+
+                IndieableStartupConsent.RecordDecision(
+                    settings,
+                    notice,
+                    true,
+                    false);
+
+                Assert.That(
+                    IndieableStartupConsent.TryGetDecision(
+                        settings,
+                        notice,
+                        out bool telemetry,
+                        out bool diagnostics),
+                    Is.True);
+                Assert.That(telemetry, Is.True);
+                Assert.That(diagnostics, Is.False);
+                Assert.That(
+                    IndieableStartupConsent.TryGetDecision(
+                        settings,
+                        "test-notice-v2",
+                        out _,
+                        out _),
+                    Is.False);
+            }
+            finally
+            {
+                string key = IndieableStartupConsent.BuildDecisionKey(
+                    settings,
+                    notice);
+                PlayerPrefs.DeleteKey(key + ".saved");
+                PlayerPrefs.DeleteKey(key + ".telemetry");
+                PlayerPrefs.DeleteKey(key + ".diagnostics");
+                UnityEngine.Object.DestroyImmediate(settings);
+            }
+        }
+
+        [Test]
+        public void AutomaticConsent_IsSuppressedForNonInteractiveProcess()
+        {
+            const string variable = "UNITY_NON_INTERACTIVE";
+            string previous = Environment.GetEnvironmentVariable(variable);
+            try
+            {
+                Environment.SetEnvironmentVariable(variable, "1");
+                Assert.That(
+                    IndieableStartupConsent.ShouldSuppressAutomaticUi(),
+                    Is.True);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(variable, previous);
+            }
+        }
+
+        [Test]
+        public void PrivacyUiToolkitResources_ArePackaged()
+        {
+            Assert.That(
+                Resources.Load<VisualTreeAsset>(
+                    "IndieablePrivacyPreferences"),
+                Is.Not.Null);
+            Assert.That(
+                Resources.Load<StyleSheet>(
+                    "IndieablePrivacyPreferences"),
+                Is.Not.Null);
         }
     }
 }

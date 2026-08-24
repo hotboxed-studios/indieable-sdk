@@ -3,67 +3,94 @@ using UnityEngine;
 
 public sealed class IndieableQuickStart : MonoBehaviour
 {
-    [SerializeField] private string publicGameKey = "ind_pub_replace_me";
-    [SerializeField] private string baseUrl = "https://indieable.com";
-    [SerializeField] private string localProfileRef = "";
+    private bool _sdkUiVisible;
+    private bool _previousCursorVisible;
+    private CursorLockMode _previousCursorLock;
+
+    private void OnEnable()
+    {
+        Indieable.PrivacyVisibilityChanged += OnSdkUiVisibilityChanged;
+        Indieable.FeedbackVisibilityChanged += OnSdkUiVisibilityChanged;
+        Indieable.SessionConnected += OnSessionConnected;
+        ReconcileSdkUiVisibility();
+    }
 
     private void Start()
     {
-        Indieable.Initialize(new IndieableOptions
+        if (Indieable.IsInitialized)
         {
-            PublicGameKey = publicGameKey,
-            BaseUrl = baseUrl,
-            BuildVersion = Application.version,
-            Environment = Debug.isDebugBuild ? "development" : "production",
-            LocalProfileRef = localProfileRef,
-            FeedbackVisibilityChanged = delegate(bool visible)
-            {
-                Debug.Log("Indieable feedback visible: " + visible);
-            },
-            PrivacyVisibilityChanged = delegate(bool visible)
-            {
-                Debug.Log("Indieable privacy UI visible: " + visible);
-            }
-        });
-
-        // Manifest lookup is safe before Connect: no session or persistent
-        // Installation/Game Player is created by this request.
-        Indieable.GetPrivacyManifest(
-            delegate(IndieablePrivacyManifest manifest)
-            {
-                Debug.Log("Indieable privacy manifest configured: " + manifest.Configured);
-                Connect();
-            },
-            delegate(IndieableError error)
-            {
-                Debug.LogWarning(error);
-                Connect();
-            });
+            Debug.Log(
+                "[Indieable Sample] SDK initialized automatically from " +
+                "Project Settings. The startup consent form is SDK-owned.");
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[Indieable Sample] Create and configure Project Settings > " +
+                "Indieable, then enter Play Mode again.");
+        }
     }
 
-    private void Connect()
+    private void OnDisable()
     {
-        Indieable.Connect(
-            delegate(IndieableSessionInfo session)
-            {
-                Debug.Log("Indieable identity: " + session.IdentityState + " / " + session.PublicPlayerRef);
-                Indieable.SendEvent(
-                    "indieable.connect_test",
-                    "{\"message\":\"Unity quick-start connected.\"}",
-                    true);
-            },
-            delegate(IndieableError error) { Debug.LogWarning(error); });
+        Indieable.PrivacyVisibilityChanged -= OnSdkUiVisibilityChanged;
+        Indieable.FeedbackVisibilityChanged -= OnSdkUiVisibilityChanged;
+        Indieable.SessionConnected -= OnSessionConnected;
+        SetSdkUiVisible(false);
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.F7)) Indieable.OpenPrivacyPreferences();
-        if (Input.GetKeyDown(KeyCode.F8)) Indieable.OpenFeedback();
-        if (Input.GetKeyDown(KeyCode.F9)) Indieable.OpenBugReport();
+        if (Input.GetKeyDown(KeyCode.F7))
+            Indieable.OpenPrivacyPreferences();
+        if (Input.GetKeyDown(KeyCode.F8))
+            Indieable.OpenFeedback();
+        if (Input.GetKeyDown(KeyCode.F9))
+            Indieable.OpenBugReport();
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             Indieable.ClosePrivacyPreferences();
             Indieable.CloseFeedback();
         }
+    }
+
+    private void OnSessionConnected(IndieableSessionInfo session)
+    {
+        Debug.Log(
+            "[Indieable Sample] Connected as " +
+            session.IdentityState + ".");
+        Indieable.SendEvent(
+            "indieable.connect_test",
+            "{\"message\":\"Unity auto-bootstrap sample connected.\"}",
+            true);
+    }
+
+    private void OnSdkUiVisibilityChanged(bool _)
+    {
+        ReconcileSdkUiVisibility();
+    }
+
+    private void ReconcileSdkUiVisibility()
+    {
+        SetSdkUiVisible(
+            Indieable.IsPrivacyPreferencesVisible ||
+            Indieable.IsFeedbackVisible);
+    }
+
+    private void SetSdkUiVisible(bool visible)
+    {
+        if (_sdkUiVisible == visible) return;
+        _sdkUiVisible = visible;
+        if (visible)
+        {
+            _previousCursorVisible = Cursor.visible;
+            _previousCursorLock = Cursor.lockState;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            return;
+        }
+
+        Cursor.lockState = _previousCursorLock;
+        Cursor.visible = _previousCursorVisible;
     }
 }

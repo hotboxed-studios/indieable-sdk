@@ -7,6 +7,33 @@ The packages follow Semantic Versioning. Nightly artifacts use
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-24
+
+### Added
+
+- Added SDK-owned Unity startup through `SubsystemRegistration`,
+  `BeforeSceneLoad`, and `AfterSceneLoad`, including domain-reload-disabled
+  static reset and idempotent initialization.
+- Added a built-in UI Toolkit Player Data consent form, versioned one-time
+  startup prompting, current UI visibility state/events, and automatic Event
+  Bus preference refresh after connection.
+- Updated both Unity samples to use project settings and automatic
+  initialization instead of owning an SDK bootstrap.
+
+### Changed
+
+- An explicit decline is stored locally for the current notice without
+  requiring persistent identity. Dismissed, failed, batch, and headless prompts
+  are not recorded as consent decisions.
+- The SteamTemplate-facing integration can now observe SDK UI state and retain
+  only cursor/input presentation ownership.
+
+### Removed
+
+- Removed the Vercel-specific request-header constants, factory, Project
+  Settings preset, tests, and current setup documentation. Generic optional
+  request headers remain available without hosting-provider defaults.
+
 ## [0.4.2] - 2026-08-23
 
 ### Added
@@ -85,7 +112,8 @@ The packages follow Semantic Versioning. Nightly artifacts use
 - Full-history secret scanning, strict package allowlisting, package validation,
   and a zero-secret C# compile check.
 
-[Unreleased]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.4.2...v0.5.0
 [0.4.2]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/hotboxed-studios/indieable-sdk/releases/tag/v0.4.0

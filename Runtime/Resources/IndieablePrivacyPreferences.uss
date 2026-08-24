@@ -1,0 +1,142 @@
+.privacy-root {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(16, 16, 20, 0.78);
+    padding: 20px;
+}
+
+.privacy-card {
+    width: 680px;
+    max-width: 96%;
+    max-height: 94%;
+    color: rgb(28, 28, 33);
+    background-color: rgb(250, 248, 239);
+    border-width: 1px;
+    border-color: rgb(183, 178, 162);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.privacy-header,
+.privacy-actions {
+    flex-direction: row;
+    align-items: center;
+}
+
+.privacy-header {
+    margin-bottom: 10px;
+}
+
+.privacy-grow {
+    flex-grow: 1;
+}
+
+.privacy-eyebrow {
+    font-size: 11px;
+    unity-font-style: bold;
+    letter-spacing: 1.5px;
+    color: rgb(96, 82, 140);
+    margin-bottom: 4px;
+}
+
+.privacy-title {
+    font-size: 24px;
+    unity-font-style: bold;
+}
+
+.privacy-scroll {
+    flex-grow: 1;
+    max-height: 600px;
+}
+
+.privacy-copy,
+.privacy-note,
+.privacy-purpose-copy,
+.privacy-status {
+    white-space: normal;
+}
+
+.privacy-copy {
+    color: rgb(76, 76, 84);
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.privacy-note {
+    color: rgb(94, 89, 105);
+    font-size: 12px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.privacy-purpose {
+    background-color: rgb(239, 235, 222);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 9px;
+}
+
+.privacy-purpose Toggle {
+    unity-font-style: bold;
+}
+
+.privacy-purpose-copy {
+    color: rgb(78, 78, 85);
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.privacy-status {
+    color: rgb(76, 43, 157);
+    unity-font-style: bold;
+    margin-top: 8px;
+}
+
+.privacy-actions {
+    margin-top: 14px;
+}
+
+.privacy-button {
+    min-width: 150px;
+    height: 36px;
+    margin-right: 8px;
+    margin-bottom: 6px;
+    padding-left: 13px;
+    padding-right: 13px;
+    border-radius: 7px;
+    border-width: 1px;
+    border-color: rgb(183, 178, 162);
+    background-color: rgb(242, 239, 226);
+    color: rgb(30, 30, 35);
+    unity-font-style: bold;
+}
+
+.privacy-button:hover {
+    background-color: rgb(231, 227, 211);
+}
+
+.privacy-primary {
+    color: white;
+    background-color: rgb(91, 55, 174);
+    border-color: rgb(91, 55, 174);
+}
+
+.privacy-primary:hover {
+    background-color: rgb(76, 43, 157);
+}
+
+.privacy-compact {
+    min-width: 76px;
+    height: 32px;
+}
+
+.privacy-action {
+    flex-grow: 1;
+    flex-basis: 0;
+    min-width: 0;
+}

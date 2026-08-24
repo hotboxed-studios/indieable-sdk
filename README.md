@@ -17,8 +17,8 @@ credentials, or deployment configuration.
 
 | Channel | Intended use | Version form |
 |---|---|---|
-| **Stable** | Normal development and production integration | `0.4.2` |
-| **Nightly** | Indieable development, early integration, and Unity testing | `0.4.2-nightly.YYYYMMDD.RUN` |
+| **Stable** | Normal development and production integration | `0.5.0` |
+| **Nightly** | Indieable development, early integration, and Unity testing | `0.5.0-nightly.YYYYMMDD.RUN` |
 
 - [Stable and historical releases](../../releases)
 - [Current Nightly release](../../releases/tag/nightly)
@@ -37,7 +37,7 @@ Window → Package Manager → + → Add package from tarball…
 A public tagged version can also be installed through:
 
 ```text
-https://github.com/hotboxed-studios/indieable-sdk.git#v0.4.2
+https://github.com/hotboxed-studios/indieable-sdk.git#v0.5.0
 ```
 
 For current integration testing:
@@ -107,8 +107,12 @@ request policy, logging, identity recovery, and Event Bus routing asset there.
 The Public Game Key is a client credential; never enter a Server Secret.
 
 New settings use `https://preview.indieable.com` and `development`, but remain
-disabled until a Public Game Key is supplied. The imported Event Bus sample
-uses this asset when present and otherwise keeps its editable in-scene UI.
+disabled until a Public Game Key is supplied. With **Initialize Automatically**
+enabled, the SDK loads these settings before the first scene's `Awake`. With
+**Show Startup Consent** enabled, its built-in UI Toolkit form opens after the
+first scene loads and only returns for a new notice version until the Player
+makes an explicit choice. Closing, failing, batch mode, and headless runs never
+mark the notice as answered.
 
 ## Global event bus
 
@@ -179,39 +183,19 @@ IndieableTelemetry.Send(...);
 
 The bus is a decoupling pattern, not a requirement.
 
-## Minimal Unity setup
+## Automatic Unity setup
 
-```csharp
-using IndieableSdk;
-using UnityEngine;
-
-public sealed class IndieableBootstrap : MonoBehaviour
-{
-    [SerializeField] private string publicGameKey = "ind_pub_replace_me";
-
-    private void Awake()
-    {
-        Indieable.Initialize(new IndieableOptions
-        {
-            BaseUrl = "https://indieable.com",
-            PublicGameKey = publicGameKey,
-            BuildVersion = Application.version,
-            Environment =
-                Debug.isDebugBuild ? "development" : "production"
-        });
-    }
-
-    private void Start()
-    {
-        Indieable.Connect(
-            session => Debug.Log(session.IdentityState),
-            error => Debug.LogWarning(error));
-    }
-}
+```text
+SubsystemRegistration  reset SDK statics for a fresh runtime
+BeforeSceneLoad         load project settings and initialize locally
+AfterSceneLoad          request the one-time consent form
 ```
 
-`Indieable.Initialize(...)` is local and side-effect-free. It loads configuration
-and a previously permitted local Installation credential but makes no request.
+No scene component, prefab, execution-order setting, or game bootstrap is
+required. Manual `Indieable.Initialize(...)` remains available for advanced
+hosts and is idempotent; it never replaces an already active client.
+Initialization is local and side-effect-free: it loads configuration and a
+previously permitted local Installation credential but makes no request.
 `Indieable.GetPrivacyManifest(...)` can be called before `Connect()` without
 creating a session or persistent identifier.
 
@@ -219,18 +203,11 @@ creating a session or persistent identifier.
 
 `Project Settings > Indieable` can author optional headers applied to every SDK
 request. Literal values are build-included project data and must never contain
-private credentials. For a protected Vercel development deployment, select
-**Add Vercel Protection Bypass**. The preset stores only:
-
-```text
-Header: x-vercel-protection-bypass
-Environment variable: VERCEL_AUTOMATION_BYPASS_SECRET
-```
-
-Define that variable locally before starting the Unity Editor. Missing
-environment variables cause the optional header to be skipped. The SDK rejects
+private credentials. A header may instead resolve from an environment variable;
+missing variables cause that optional header to be skipped. The SDK rejects
 duplicate, malformed, newline-bearing, and SDK-owned headers such as
-`Authorization` and `Content-Type`.
+`Authorization` and `Content-Type`. The package includes no hosting-provider
+bypass preset or credential default.
 
 ## Client credential boundary
 
@@ -251,10 +228,10 @@ strict allowlist.
 ## Identity and privacy lifecycle
 
 ```text
-Indieable.Initialize()
-  local only
+RuntimeInitializeLoadType.BeforeSceneLoad
+  project settings load and local-only initialization
 
-Indieable.GetPrivacyManifest()
+RuntimeInitializeLoadType.AfterSceneLoad
   public notice read; no session or persistent identifier
 
 Indieable.Connect()

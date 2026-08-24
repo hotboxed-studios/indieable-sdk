@@ -54,6 +54,11 @@ namespace IndieableSdk
             if (_instance != null) _instance.Hide();
         }
 
+        internal static void ResetForRuntimeStartup()
+        {
+            _instance = null;
+        }
+
         private void Show(IndieableClient client, bool bugMode)
         {
             _client = client;
@@ -70,12 +75,17 @@ namespace IndieableSdk
 
         private void Hide()
         {
-            if (_client != null) _client.NotifyFeedbackVisibility(false);
+            var client = _client;
+            _client = null;
+            if (client != null) client.NotifyFeedbackVisibility(false);
             Destroy(gameObject);
         }
 
         private void OnDestroy()
         {
+            var client = _client;
+            _client = null;
+            if (client != null) client.NotifyFeedbackVisibility(false);
             if (_instance == this) _instance = null;
         }
 

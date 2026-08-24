@@ -10,24 +10,46 @@ namespace IndieableSdk
         public const string DiagnosticsPurpose = "DIAGNOSTICS";
 
         private static IndieableClient _client;
+        private static bool _privacyPreferencesVisible;
+        private static bool _feedbackVisible;
 
         public static bool IsInitialized { get { return _client != null; } }
         public static bool IsConnected { get { return _client != null && _client.IsConnected; } }
         public static IndieableSessionInfo Session { get { return _client != null ? _client.Session : null; } }
+        public static bool IsPrivacyPreferencesVisible =>
+            _privacyPreferencesVisible;
+        public static bool IsFeedbackVisible => _feedbackVisible;
+
+        internal static IndieableClient Client => _client;
+
+        public static event Action<bool> PrivacyVisibilityChanged;
+        public static event Action<bool> FeedbackVisibilityChanged;
+        public static event Action<IndieableSessionInfo> SessionConnected;
+        public static event Action<IndieablePrivacyPreferences>
+            PrivacyPreferencesChanged;
 
         // Initialize is local and side-effect-free. It loads configuration and a
         // previously granted local credential, but performs no network request.
         public static void Initialize(IndieableOptions options)
         {
+            if (_client != null)
+            {
+                if (!_client.MatchesOptions(options))
+                {
+                    Debug.LogWarning(
+                        "[Indieable] Initialize ignored because the SDK is " +
+                        "already initialized with different settings.");
+                }
+                return;
+            }
+
             if (options == null || string.IsNullOrWhiteSpace(options.PublicGameKey))
             {
-                _client = null;
                 Debug.LogWarning("[Indieable] PublicGameKey is required. Indieable is disabled; the host game can continue normally.");
                 return;
             }
             if (!IsAllowedBaseUrl(options.BaseUrl))
             {
-                _client = null;
                 Debug.LogWarning("[Indieable] BaseUrl must use HTTPS. Plain HTTP is allowed only for loopback development URLs; Indieable is disabled.");
                 return;
             }
@@ -43,7 +65,13 @@ namespace IndieableSdk
         public static void Connect(Action<IndieableSessionInfo> onSuccess = null, Action<IndieableError> onError = null)
         {
             if (!RequireClient(onError)) return;
-            IndieableRuntime.Instance.Run(_client.Connect(onSuccess, onError));
+            IndieableRuntime.Instance.Run(_client.Connect(
+                info =>
+                {
+                    NotifySessionConnected(info);
+                    onSuccess?.Invoke(info);
+                },
+                onError));
         }
 
         // Safe before Connect and before optional permission. This reads only the
@@ -59,7 +87,13 @@ namespace IndieableSdk
             Action<IndieableError> onError = null)
         {
             if (!RequireClient(onError)) return;
-            IndieableRuntime.Instance.Run(_client.GetPrivacyPreferences(onSuccess, onError));
+            IndieableRuntime.Instance.Run(_client.GetPrivacyPreferences(
+                preferences =>
+                {
+                    NotifyPrivacyPreferencesChanged(preferences);
+                    onSuccess?.Invoke(preferences);
+                },
+                onError));
         }
 
         public static void SetPrivacyPreference(string purposeKey, bool enabled,
@@ -70,7 +104,16 @@ namespace IndieableSdk
         {
             if (!RequireClient(onError)) return;
             IndieableRuntime.Instance.Run(_client.SetPrivacyPreference(
-                purposeKey, enabled, locale, customUi, onSuccess, onError));
+                purposeKey,
+                enabled,
+                locale,
+                customUi,
+                preferences =>
+                {
+                    NotifyPrivacyPreferencesChanged(preferences);
+                    onSuccess?.Invoke(preferences);
+                },
+                onError));
         }
 
         public static void SetLocalProfile(string localProfileRef,
@@ -95,6 +138,21 @@ namespace IndieableSdk
         }
 
         public static void ClosePrivacyPreferences() { IndieablePrivacyUI.Close(); }
+
+        public static void RequestStartupConsent()
+        {
+            IndieableProjectSettings settings =
+                IndieableAutoBootstrap.Settings ??
+                IndieableProjectSettings.Load();
+            if (settings == null ||
+                !settings.ShowStartupConsent ||
+                IndieableStartupConsent.ShouldSuppressAutomaticUi())
+            {
+                return;
+            }
+
+            IndieableStartupConsent.RequestAutomatic(settings);
+        }
 
         public static void LinkAccount(Action<IndieableDeviceLink> onCode,
             Action<IndieableSessionInfo> onLinked = null, Action<IndieableError> onError = null,
@@ -225,6 +283,86 @@ namespace IndieableSdk
             var error = new IndieableError("not_initialized", "Call Indieable.Initialize first.");
             if (onError != null) onError(error);
             return false;
+        }
+
+        internal static void NotifyPrivacyVisibility(bool visible)
+        {
+            if (_privacyPreferencesVisible == visible) return;
+            _privacyPreferencesVisible = visible;
+            InvokeVisibilityChanged(
+                PrivacyVisibilityChanged,
+                visible,
+                "PrivacyVisibilityChanged");
+        }
+
+        internal static void NotifyFeedbackVisibility(bool visible)
+        {
+            if (_feedbackVisible == visible) return;
+            _feedbackVisible = visible;
+            InvokeVisibilityChanged(
+                FeedbackVisibilityChanged,
+                visible,
+                "FeedbackVisibilityChanged");
+        }
+
+        internal static void ResetForRuntimeStartup()
+        {
+            if (_privacyPreferencesVisible)
+                NotifyPrivacyVisibility(false);
+            if (_feedbackVisible)
+                NotifyFeedbackVisibility(false);
+
+            _client = null;
+            _privacyPreferencesVisible = false;
+            _feedbackVisible = false;
+            PrivacyVisibilityChanged = null;
+            FeedbackVisibilityChanged = null;
+            SessionConnected = null;
+            PrivacyPreferencesChanged = null;
+        }
+
+        private static void NotifySessionConnected(
+            IndieableSessionInfo session)
+        {
+            Action<IndieableSessionInfo> callback = SessionConnected;
+            if (callback == null) return;
+            try { callback(session); }
+            catch (Exception exception)
+            {
+                Debug.LogWarning(
+                    "[Indieable] SessionConnected callback failed: " +
+                    exception.Message);
+            }
+        }
+
+        private static void NotifyPrivacyPreferencesChanged(
+            IndieablePrivacyPreferences preferences)
+        {
+            Action<IndieablePrivacyPreferences> callback =
+                PrivacyPreferencesChanged;
+            if (callback == null) return;
+            try { callback(preferences); }
+            catch (Exception exception)
+            {
+                Debug.LogWarning(
+                    "[Indieable] PrivacyPreferencesChanged callback failed: " +
+                    exception.Message);
+            }
+        }
+
+        private static void InvokeVisibilityChanged(
+            Action<bool> callback,
+            bool visible,
+            string callbackName)
+        {
+            if (callback == null) return;
+            try { callback(visible); }
+            catch (Exception exception)
+            {
+                Debug.LogWarning(
+                    "[Indieable] " + callbackName + " callback failed: " +
+                    exception.Message);
+            }
         }
     }
 }
