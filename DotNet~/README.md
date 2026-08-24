@@ -1,13 +1,13 @@
 # Generic C# SDK
 
-`DotNet/Indieable.Sdk` is the engine-agnostic C# client shipped beside the Unity
+`DotNet~/Indieable.Sdk` is the engine-agnostic C# client shipped beside the Unity
 Package Manager package.
 
 Build and pack locally:
 
 ```bash
-dotnet build DotNet/Indieable.Sdk/Indieable.Sdk.csproj --configuration Release
-dotnet pack DotNet/Indieable.Sdk/Indieable.Sdk.csproj \
+dotnet build DotNet~/Indieable.Sdk/Indieable.Sdk.csproj --configuration Release
+dotnet pack DotNet~/Indieable.Sdk/Indieable.Sdk.csproj \
   --configuration Release \
   --output dist
 ```

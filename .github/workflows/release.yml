@@ -70,7 +70,7 @@ jobs:
           fi
           DOTNET_VERSION="$(python - <<'PY'
           import xml.etree.ElementTree as ET
-          root = ET.parse("DotNet/Indieable.Sdk/Indieable.Sdk.csproj").getroot()
+          root = ET.parse("DotNet~/Indieable.Sdk/Indieable.Sdk.csproj").getroot()
           value = root.findtext(".//Version")
           print(value or "")
           PY
@@ -102,25 +102,25 @@ jobs:
           fi
 
       - name: Scan the tree and Git history for secrets
-        run: python scripts/scan_secrets.py --history
+        run: python scripts~/scan_secrets.py --history
 
       - name: Validate Unity and generic C# packages
         run: |
-          python scripts/validate_package.py
-          python scripts/validate_examples.py
+          python scripts~/validate_package.py
+          python scripts~/validate_examples.py
 
       - name: Compile Unity runtime and sample
         run: dotnet build ci~/CompileCheck/CompileCheck.csproj --configuration Release
 
       - name: Build and smoke-test generic C# SDK
         run: |
-          dotnet build DotNet/Indieable.Sdk/Indieable.Sdk.csproj --configuration Release
+          dotnet build DotNet~/Indieable.Sdk/Indieable.Sdk.csproj --configuration Release
           dotnet run --project ci~/CoreSmoke/CoreSmoke.csproj --configuration Release
 
       - name: Build Stable Unity and generic C# artifacts
         run: |
-          python scripts/package.py --channel stable --output dist
-          dotnet pack DotNet/Indieable.Sdk/Indieable.Sdk.csproj \
+          python scripts~/package.py --channel stable --output dist
+          dotnet pack DotNet~/Indieable.Sdk/Indieable.Sdk.csproj \
             --configuration Release \
             --output dist \
             -p:PackageVersion="${{ steps.version.outputs.version }}"

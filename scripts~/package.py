@@ -29,9 +29,13 @@ PUBLIC_ENTRIES = (
     "Tests",
     "Tests.meta",
     "README.md",
+    "README.md.meta",
     "CHANGELOG.md",
+    "CHANGELOG.md.meta",
     "LICENSE.md",
+    "LICENSE.md.meta",
     "package.json",
+    "package.json.meta",
 )
 
 

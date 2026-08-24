@@ -40,19 +40,19 @@ jobs:
         run: python -m compileall -q scripts
 
       - name: Scan the tree and Git history for secrets
-        run: python scripts/scan_secrets.py --history
+        run: python scripts~/scan_secrets.py --history
 
       - name: Validate the Unity package
-        run: python scripts/validate_package.py
+        run: python scripts~/validate_package.py
 
       - name: Validate the Unity sample and generic C# SDK
-        run: python scripts/validate_examples.py
+        run: python scripts~/validate_examples.py
 
       - name: Compile the Unity runtime and imported sample scripts
         run: dotnet build ci~/CompileCheck/CompileCheck.csproj --configuration Release
 
       - name: Build the generic C# SDK
-        run: dotnet build DotNet/Indieable.Sdk/Indieable.Sdk.csproj --configuration Release
+        run: dotnet build DotNet~/Indieable.Sdk/Indieable.Sdk.csproj --configuration Release
 
       - name: Run generic C# and event-bus smoke
         run: dotnet run --project ci~/CoreSmoke/CoreSmoke.csproj --configuration Release
@@ -62,8 +62,8 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="$(python -c 'import json; print(json.load(open("package.json", encoding="utf-8"))["version"])')"
-          python scripts/package.py --channel stable --output dist
-          dotnet pack DotNet/Indieable.Sdk/Indieable.Sdk.csproj \
+          python scripts~/package.py --channel stable --output dist
+          dotnet pack DotNet~/Indieable.Sdk/Indieable.Sdk.csproj \
             --configuration Release \
             --output dist \
             -p:PackageVersion="${VERSION}"

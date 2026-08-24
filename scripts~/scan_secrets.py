@@ -95,7 +95,9 @@ def is_placeholder(line: str) -> bool:
 
 def is_detection_rule(origin: str, line: str) -> bool:
     is_security_tool = (
-        "scripts/validate_package.py" in origin
+        "scripts~/validate_package.py" in origin
+        or "scripts~/scan_secrets.py" in origin
+        or "scripts/validate_package.py" in origin
         or "scripts/scan_secrets.py" in origin
     )
     if not is_security_tool or "-----BEGIN" in line:

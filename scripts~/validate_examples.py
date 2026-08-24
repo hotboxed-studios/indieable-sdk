@@ -31,14 +31,14 @@ REQUIRED_SAMPLE_FILES = (
 )
 
 REQUIRED_DOTNET_FILES = (
-    "DotNet/README.md",
-    "DotNet/Indieable.Sdk/README.md",
-    "DotNet/Indieable.Sdk/Indieable.Sdk.csproj",
-    "DotNet/Indieable.Sdk/IndieableClientOptions.cs",
-    "DotNet/Indieable.Sdk/IndieableModels.cs",
-    "DotNet/Indieable.Sdk/IndieableIdentityStorage.cs",
-    "DotNet/Indieable.Sdk/IndieableClient.cs",
-    "DotNet/Indieable.Sdk/IndieableEventBusForwarder.cs",
+    "DotNet~/README.md",
+    "DotNet~/Indieable.Sdk/README.md",
+    "DotNet~/Indieable.Sdk/Indieable.Sdk.csproj",
+    "DotNet~/Indieable.Sdk/IndieableClientOptions.cs",
+    "DotNet~/Indieable.Sdk/IndieableModels.cs",
+    "DotNet~/Indieable.Sdk/IndieableIdentityStorage.cs",
+    "DotNet~/Indieable.Sdk/IndieableClient.cs",
+    "DotNet~/Indieable.Sdk/IndieableEventBusForwarder.cs",
     "ci~/CoreSmoke/CoreSmoke.csproj",
     "ci~/CoreSmoke/Program.cs",
     "ci~/CompileCheck/EventBusUnityStubs.cs",
@@ -66,7 +66,7 @@ def main() -> int:
             "UnityExample must not exist; the integration is "
             "a normal package sample"
         )
-    if (ROOT / "scripts/package_example.py").exists():
+    if (ROOT / "scripts~/package_example.py").exists():
         errors.append(
             "package_example.py must not exist"
         )
@@ -251,7 +251,7 @@ def main() -> int:
             )
 
     dotnet_project = (
-        ROOT / "DotNet/Indieable.Sdk/Indieable.Sdk.csproj"
+        ROOT / "DotNet~/Indieable.Sdk/Indieable.Sdk.csproj"
     )
     if dotnet_project.is_file():
         project = dotnet_project.read_text(
@@ -275,7 +275,7 @@ def main() -> int:
             errors="replace",
         )
         for path in (
-            ROOT / "DotNet/Indieable.Sdk"
+            ROOT / "DotNet~/Indieable.Sdk"
         ).glob("*.cs")
     )
     if "UnityEngine" in dotnet_source:
@@ -313,7 +313,7 @@ def main() -> int:
         require_markers(
             workflow,
             (
-                "DotNet/Indieable.Sdk/Indieable.Sdk.csproj",
+                "DotNet~/Indieable.Sdk/Indieable.Sdk.csproj",
                 "ci~/CoreSmoke/CoreSmoke.csproj",
             ),
             workflow_name,
@@ -321,8 +321,8 @@ def main() -> int:
         )
 
     for relative in (
-        "docs/EVENT-BUS.md",
-        "docs/UNITY-SAMPLE-TESTING.md",
+        "Documentation~/EVENT-BUS.md",
+        "Documentation~/UNITY-SAMPLE-TESTING.md",
     ):
         if not (ROOT / relative).is_file():
             errors.append(

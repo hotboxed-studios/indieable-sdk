@@ -8,7 +8,7 @@ The repository ships two client surfaces:
 
 - **Unity Package Manager** — `com.indieable.sdk`, including runtime UI and an
   importable Event Bus Integration sample.
-- **Generic C#** — `DotNet/Indieable.Sdk`, an engine-agnostic .NET 8 client.
+- **Generic C#** — `DotNet~/Indieable.Sdk`, an engine-agnostic .NET 8 client.
 
 It does not contain the Indieable application, database, Server Secrets, provider
 credentials, or deployment configuration.
@@ -17,8 +17,8 @@ credentials, or deployment configuration.
 
 | Channel | Intended use | Version form |
 |---|---|---|
-| **Stable** | Normal development and production integration | `0.5.0` |
-| **Nightly** | Indieable development, early integration, and Unity testing | `0.5.0-nightly.YYYYMMDD.RUN` |
+| **Stable** | Normal development and production integration | `0.5.1` |
+| **Nightly** | Indieable development, early integration, and Unity testing | `0.5.1-nightly.YYYYMMDD.RUN` |
 
 - [Stable and historical releases](../../releases)
 - [Current Nightly release](../../releases/tag/nightly)
@@ -37,7 +37,7 @@ Window → Package Manager → + → Add package from tarball…
 A public tagged version can also be installed through:
 
 ```text
-https://github.com/hotboxed-studios/indieable-sdk.git#v0.5.0
+https://github.com/hotboxed-studios/indieable-sdk.git#v0.5.1
 ```
 
 For current integration testing:
@@ -87,7 +87,7 @@ selects some, all, or all-except-denied events and maps local names to registere
 Indieable event keys.
 
 See [the sample README](Samples~/EventBusIntegration/README.md) and
-[Unity sample testing guide](docs/UNITY-SAMPLE-TESTING.md).
+[Unity sample testing guide](Documentation~/UNITY-SAMPLE-TESTING.md).
 
 ## Configure a Unity project
 
@@ -283,7 +283,7 @@ but the sample never broadens it. Withdrawal is server-enforced.
 The engine-agnostic package lives in:
 
 ```text
-DotNet/Indieable.Sdk
+DotNet~/Indieable.Sdk
 ```
 
 It provides async APIs for:
@@ -301,11 +301,11 @@ It provides async APIs for:
 Build or pack it with:
 
 ```bash
-dotnet build DotNet/Indieable.Sdk/Indieable.Sdk.csproj -c Release
-dotnet pack DotNet/Indieable.Sdk/Indieable.Sdk.csproj -c Release -o dist
+dotnet build DotNet~/Indieable.Sdk/Indieable.Sdk.csproj -c Release
+dotnet pack DotNet~/Indieable.Sdk/Indieable.Sdk.csproj -c Release -o dist
 ```
 
-See [the .NET package README](DotNet/Indieable.Sdk/README.md).
+See [the .NET package README](DotNet~/Indieable.Sdk/README.md).
 
 ## Account linking, forms, and Challenges
 
@@ -334,13 +334,13 @@ broad gameplay telemetry may remain off.
 Local checks require Python 3.12 and .NET 8:
 
 ```bash
-python scripts/scan_secrets.py --history
-python scripts/validate_package.py
-python scripts/validate_examples.py
+python scripts~/scan_secrets.py --history
+python scripts~/validate_package.py
+python scripts~/validate_examples.py
 dotnet build ci~/CompileCheck/CompileCheck.csproj -c Release
 dotnet run --project ci~/CoreSmoke/CoreSmoke.csproj -c Release
-dotnet pack DotNet/Indieable.Sdk/Indieable.Sdk.csproj -c Release -o dist
-python scripts/package.py --channel stable --output dist
+dotnet pack DotNet~/Indieable.Sdk/Indieable.Sdk.csproj -c Release -o dist
+python scripts~/package.py --channel stable --output dist
 ```
 
 CI compiles the Unity package/sample against zero-secret Unity API stubs, builds

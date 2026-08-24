@@ -185,9 +185,9 @@ Test Unity 2022.3 and Unity 6:
 From the repository root:
 
 ```bash
-dotnet build DotNet/Indieable.Sdk/Indieable.Sdk.csproj -c Release
+dotnet build DotNet~/Indieable.Sdk/Indieable.Sdk.csproj -c Release
 dotnet run --project ci~/CoreSmoke/CoreSmoke.csproj -c Release
-dotnet pack DotNet/Indieable.Sdk/Indieable.Sdk.csproj -c Release -o dist
+dotnet pack DotNet~/Indieable.Sdk/Indieable.Sdk.csproj -c Release -o dist
 ```
 
 Inspect the `.nupkg` and verify it contains the generic client, shared event bus,

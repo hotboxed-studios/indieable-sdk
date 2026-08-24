@@ -31,18 +31,18 @@ not persisted.
 ## Stable
 
 1. Update `package.json` and
-   `DotNet/Indieable.Sdk/Indieable.Sdk.csproj` to the same Semantic Version.
+   `DotNet~/Indieable.Sdk/Indieable.Sdk.csproj` to the same Semantic Version.
 2. Update `CHANGELOG.md`.
 3. Run the local validation commands from the root README.
 4. Import the generated Unity `.tgz` into Unity 2022.3 and Unity 6.
 5. Import **Event Bus Integration**, open its scene, and complete
-   `docs/UNITY-SAMPLE-TESTING.md`.
+   `Documentation~/UNITY-SAMPLE-TESTING.md`.
 6. Exercise the generic `.nupkg` from a disposable .NET 8 application.
 7. Push the matching tag, for example:
 
    ```bash
-   git tag v0.5.0
-   git push origin v0.5.0
+   git tag v0.5.1
+   git push origin v0.5.1
    ```
 
 The `Release` workflow rejects a tag that does not exactly match both package
@@ -62,7 +62,7 @@ LICENSE.md
 package.json
 ```
 
-`DotNet/`, CI, scripts, workflows, repository configuration, local files, and
+`DotNet~/`, CI, scripts, workflows, repository configuration, local files, and
 credentials are not eligible for the Unity archive.
 
 CI-only C# stubs live under `ci~/`, keeping them invisible when Unity installs the
@@ -70,7 +70,7 @@ repository root directly as a Git package.
 
 ## Generic C# package boundary
 
-`dotnet pack` builds only `DotNet/Indieable.Sdk`, the linked pure C# sources under
+`dotnet pack` builds only `DotNet~/Indieable.Sdk`, the linked pure C# sources under
 `Runtime/Events`, the generic README, and the MIT license.
 
 The generic package must not contain:

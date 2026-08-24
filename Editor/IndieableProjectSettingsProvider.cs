@@ -100,7 +100,7 @@ namespace IndieableSdk.Editor
             EditorGUILayout.Space();
             using (new EditorGUI.DisabledScope(true))
             {
-                EditorGUILayout.TextField("SDK Version", "unity-0.5.0");
+                EditorGUILayout.TextField("SDK Version", "unity-0.5.1");
                 EditorGUILayout.TextField("Build Version", Application.version);
                 EditorGUILayout.TextField("Platform", Application.platform.ToString());
                 EditorGUILayout.TextField("Engine", "Unity " + Application.unityVersion);

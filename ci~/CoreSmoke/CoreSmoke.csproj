@@ -9,6 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../DotNet/Indieable.Sdk/Indieable.Sdk.csproj" />
+    <ProjectReference Include="../../DotNet~/Indieable.Sdk/Indieable.Sdk.csproj" />
   </ItemGroup>
 </Project>

@@ -21,9 +21,13 @@ EXPECTED_PACKAGE_FILES = [
 ]
 REQUIRED_PATHS = [
     "package.json",
+    "package.json.meta",
     "README.md",
+    "README.md.meta",
     "CHANGELOG.md",
+    "CHANGELOG.md.meta",
     "LICENSE.md",
+    "LICENSE.md.meta",
     "Editor/Indieable.Editor.asmdef",
     "Editor/IndieableProjectSettingsProvider.cs",
     "Runtime/Indieable.Runtime.asmdef",
@@ -157,6 +161,17 @@ def require_markers(
 def validate(root: Path) -> list[str]:
     root = root.resolve()
     errors: list[str] = []
+
+    for visible_development_directory in (
+        "DotNet",
+        "docs",
+        "scripts",
+    ):
+        if (root / visible_development_directory).exists():
+            errors.append(
+                "repository-only directory must use Unity's trailing-tilde "
+                "ignore convention: " + visible_development_directory
+            )
 
     manifest = load_json(root / "package.json", errors)
     if manifest.get("name") != PACKAGE_NAME:
