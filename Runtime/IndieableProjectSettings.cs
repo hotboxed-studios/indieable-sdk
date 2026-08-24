@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using IndieableSdk.EventBus;
 using UnityEngine;
 
@@ -25,6 +26,8 @@ namespace IndieableSdk
         [SerializeField, Range(0, 10)] private int maxTransientRetries = 2;
         [SerializeField] private bool logErrors = true;
         [SerializeField] private bool autoClearInvalidIdentity = true;
+        [SerializeField] private IndieableRequestHeader[] requestHeaders =
+            Array.Empty<IndieableRequestHeader>();
         [SerializeField] private IndieableEventRoutingSettings eventRouting;
 
         public string BaseUrl => (baseUrl ?? "").Trim();
@@ -37,6 +40,8 @@ namespace IndieableSdk
             Mathf.Clamp(maxTransientRetries, 0, 10);
         public bool LogErrors => logErrors;
         public bool AutoClearInvalidIdentity => autoClearInvalidIdentity;
+        public IReadOnlyList<IndieableRequestHeader> RequestHeaders =>
+            requestHeaders ?? Array.Empty<IndieableRequestHeader>();
         public IndieableEventRoutingSettings EventRouting => eventRouting;
         public bool IsConfigured => TryValidate(out _);
 
@@ -63,6 +68,7 @@ namespace IndieableSdk
                 MaxTransientRetries = MaxTransientRetries,
                 LogErrors = LogErrors,
                 AutoClearInvalidIdentity = AutoClearInvalidIdentity,
+                RequestHeaders = CloneRequestHeaders(),
                 PrivacyVisibilityChanged = privacyVisibilityChanged,
                 FeedbackVisibilityChanged = feedbackVisibilityChanged
             };
@@ -89,8 +95,55 @@ namespace IndieableSdk
                 return false;
             }
 
+            var seenHeaders = new HashSet<string>(
+                StringComparer.OrdinalIgnoreCase);
+            var headers = requestHeaders ??
+                Array.Empty<IndieableRequestHeader>();
+            for (var index = 0; index < headers.Length; index++)
+            {
+                var header = headers[index];
+                if (header == null)
+                {
+                    issue = "Request Header " + index + " is missing.";
+                    return false;
+                }
+                if (!header.TryValidate(out var headerIssue))
+                {
+                    issue = "Request Header " + index + ": " + headerIssue + ".";
+                    return false;
+                }
+                if (header.Enabled &&
+                    !seenHeaders.Add((header.Name ?? "").Trim()))
+                {
+                    issue = "Request Header " + index + " duplicates an earlier header name.";
+                    return false;
+                }
+            }
+
             issue = "";
             return true;
+        }
+
+        private IndieableRequestHeader[] CloneRequestHeaders()
+        {
+            var source = requestHeaders ??
+                Array.Empty<IndieableRequestHeader>();
+            var clone = new IndieableRequestHeader[source.Length];
+            for (var index = 0; index < source.Length; index++)
+            {
+                var header = source[index];
+                clone[index] = header == null
+                    ? null
+                    : new IndieableRequestHeader
+                    {
+                        Enabled = header.Enabled,
+                        Name = header.Name ?? "",
+                        Value = header.Value ?? "",
+                        ValueEnvironmentVariable =
+                            header.ValueEnvironmentVariable ?? ""
+                    };
+            }
+            return clone;
         }
 
         private static bool IsAllowedBaseUrl(string value)

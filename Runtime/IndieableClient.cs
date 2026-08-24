@@ -786,6 +786,7 @@ namespace IndieableSdk
                     if (method != UnityWebRequest.kHttpVerbGET)
                         request.SetRequestHeader("Content-Type", "application/json");
                     if (!string.IsNullOrWhiteSpace(bearer)) request.SetRequestHeader("Authorization", "Bearer " + bearer);
+                    ApplyRequestHeaders(request);
                     request.timeout = Math.Max(5, _options.RequestTimeoutSeconds);
                     yield return request.SendWebRequest();
                     var transient = request.result == UnityWebRequest.Result.ConnectionError ||
@@ -821,6 +822,20 @@ namespace IndieableSdk
                 ? "Indieable is unreachable. The host game can continue normally."
                 : "Indieable rejected the request.";
             return new IndieableError("request_failed", message, request.responseCode);
+        }
+
+        private void ApplyRequestHeaders(UnityWebRequest request)
+        {
+            var headers = _options.RequestHeaders ??
+                new IndieableRequestHeader[0];
+            for (var index = 0; index < headers.Length; index++)
+            {
+                var header = headers[index];
+                if (header == null ||
+                    !header.TryResolve(out var name, out var value))
+                    continue;
+                request.SetRequestHeader(name, value);
+            }
         }
 
         private string BuildUrl(string path) { return (_options.BaseUrl ?? "https://indieable.com").TrimEnd('/') + path; }

@@ -3,11 +3,144 @@ using System;
 namespace IndieableSdk
 {
     [Serializable]
+    public sealed class IndieableRequestHeader
+    {
+        public const string VercelProtectionBypassHeader =
+            "x-vercel-protection-bypass";
+        public const string VercelProtectionBypassEnvironmentVariable =
+            "VERCEL_AUTOMATION_BYPASS_SECRET";
+
+        public bool Enabled = true;
+        public string Name = "";
+        public string Value = "";
+        public string ValueEnvironmentVariable = "";
+
+        public static IndieableRequestHeader CreateVercelProtectionBypass()
+        {
+            return new IndieableRequestHeader
+            {
+                Name = VercelProtectionBypassHeader,
+                ValueEnvironmentVariable =
+                    VercelProtectionBypassEnvironmentVariable
+            };
+        }
+
+        internal bool TryValidate(out string issue)
+        {
+            issue = "";
+            if (!Enabled) return true;
+
+            var name = (Name ?? "").Trim();
+            if (!IsValidHeaderName(name))
+            {
+                issue = "header name is missing or invalid";
+                return false;
+            }
+            if (IsReservedHeaderName(name))
+            {
+                issue = "header name is owned by the Indieable SDK";
+                return false;
+            }
+
+            var literal = Value ?? "";
+            var environmentVariable =
+                (ValueEnvironmentVariable ?? "").Trim();
+            if (ContainsNewline(literal))
+            {
+                issue = "literal header value cannot contain newlines";
+                return false;
+            }
+            if (literal.Length > 0 && environmentVariable.Length > 0)
+            {
+                issue = "choose either a literal value or an environment variable";
+                return false;
+            }
+            if (literal.Length == 0 && environmentVariable.Length == 0)
+            {
+                issue = "header value source is required";
+                return false;
+            }
+            if (environmentVariable.Length > 0 &&
+                !IsValidEnvironmentVariableName(environmentVariable))
+            {
+                issue = "environment variable name is invalid";
+                return false;
+            }
+
+            return true;
+        }
+
+        internal bool TryResolve(out string name, out string value)
+        {
+            name = "";
+            value = "";
+            if (!Enabled || !TryValidate(out _)) return false;
+
+            name = Name.Trim();
+            var environmentVariable =
+                (ValueEnvironmentVariable ?? "").Trim();
+            value = environmentVariable.Length > 0
+                ? Environment.GetEnvironmentVariable(environmentVariable) ?? ""
+                : Value ?? "";
+            if (value.Length == 0 || ContainsNewline(value))
+            {
+                name = "";
+                value = "";
+                return false;
+            }
+            return true;
+        }
+
+        private static bool IsValidHeaderName(string value)
+        {
+            if (value.Length == 0) return false;
+            for (var index = 0; index < value.Length; index++)
+            {
+                var character = value[index];
+                if (char.IsLetterOrDigit(character) ||
+                    "!#$%&'*+-.^_`|~".IndexOf(character) >= 0)
+                    continue;
+                return false;
+            }
+            return true;
+        }
+
+        private static bool IsValidEnvironmentVariableName(string value)
+        {
+            if (value.Length == 0 ||
+                !(char.IsLetter(value[0]) || value[0] == '_'))
+                return false;
+            for (var index = 1; index < value.Length; index++)
+            {
+                if (!char.IsLetterOrDigit(value[index]) && value[index] != '_')
+                    return false;
+            }
+            return true;
+        }
+
+        private static bool IsReservedHeaderName(string value)
+        {
+            return string.Equals(value, "Accept", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(value, "Authorization", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(value, "Content-Length", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(value, "Content-Type", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(value, "Cookie", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(value, "Host", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(value, "User-Agent", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool ContainsNewline(string value)
+        {
+            return value.IndexOf('\r') >= 0 || value.IndexOf('\n') >= 0;
+        }
+    }
+
+    [Serializable]
     public sealed class IndieableOptions
     {
         public string BaseUrl = "https://indieable.com";
         public string PublicGameKey = "";
-        public string SdkVersion = "unity-0.4.1";
+        public string SdkVersion = "unity-0.4.2";
         public string BuildVersion = "";
         public string Platform = "";
         public string Environment = "production";
@@ -18,6 +151,8 @@ namespace IndieableSdk
         public int MaxTransientRetries = 2;
         public bool LogErrors = true;
         public bool AutoClearInvalidIdentity = true;
+        public IndieableRequestHeader[] RequestHeaders =
+            new IndieableRequestHeader[0];
 
         [NonSerialized] public IIndieableIdentityStorage IdentityStorage;
         [NonSerialized] public Action<bool> FeedbackVisibilityChanged;

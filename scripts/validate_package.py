@@ -335,6 +335,33 @@ def validate(root: Path) -> list[str]:
         ),
         errors,
     )
+    require_markers(
+        root / "Runtime/IndieableModels.cs",
+        (
+            "public sealed class IndieableRequestHeader",
+            "x-vercel-protection-bypass",
+            "VERCEL_AUTOMATION_BYPASS_SECRET",
+            "TryResolve",
+        ),
+        errors,
+    )
+    require_markers(
+        root / "Runtime/IndieableClient.cs",
+        (
+            "ApplyRequestHeaders",
+            "request.SetRequestHeader(name, value)",
+        ),
+        errors,
+    )
+    require_markers(
+        root / "Editor/IndieableProjectSettingsProvider.cs",
+        (
+            "Optional Request Headers",
+            "Add Vercel Protection Bypass",
+            "VercelProtectionBypassEnvironmentVariable",
+        ),
+        errors,
+    )
 
     models_path = root / "Runtime/IndieableModels.cs"
     if models_path.is_file() and version:

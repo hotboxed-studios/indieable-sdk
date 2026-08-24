@@ -50,20 +50,26 @@ internal static class Program
 
         var handler = new StubHandler();
         using var httpClient = new HttpClient(handler);
+        var clientOptions = new IndieableClientOptions
+        {
+            BaseUrl = "https://example.test",
+            PublicGameKey = "ind_pub_smoke_test",
+            Environment = "development",
+            BuildVersion = "smoke",
+            HttpClient = httpClient,
+            IdentityStorage =
+                new IndieableMemoryIdentityStorage()
+        };
+        clientOptions.RequestHeaders.Add(
+            "x-indieable-smoke",
+            "optional-header");
         await using var client = new IndieableClient(
-            new IndieableClientOptions
-            {
-                BaseUrl = "https://example.test",
-                PublicGameKey = "ind_pub_smoke_test",
-                Environment = "development",
-                BuildVersion = "smoke",
-                HttpClient = httpClient,
-                IdentityStorage =
-                    new IndieableMemoryIdentityStorage()
-            });
+            clientOptions);
 
         var manifest =
             await client.GetPrivacyManifestAsync();
+        Assert(handler.SawOptionalHeader,
+            "optional request header was not applied");
         Assert(manifest.Configured,
             "public privacy manifest was not mapped");
         Assert(!client.IsConnected,
@@ -180,12 +186,18 @@ internal static class Program
     private sealed class StubHandler : HttpMessageHandler
     {
         public string? EventRequestBody { get; private set; }
+        public bool SawOptionalHeader { get; private set; }
 
         protected override async Task<HttpResponseMessage>
             SendAsync(
                 HttpRequestMessage request,
                 CancellationToken cancellationToken)
         {
+            SawOptionalHeader |=
+                request.Headers.TryGetValues(
+                    "x-indieable-smoke",
+                    out var optionalValues) &&
+                optionalValues.Contains("optional-header");
             var path = request.RequestUri?.AbsolutePath ?? "";
             if (path == "/api/connect/v1/events")
             {

@@ -85,5 +85,54 @@ namespace IndieableSdk.Tests
                 UnityEngine.Object.DestroyImmediate(settings);
             }
         }
+
+        [Test]
+        public void RequestHeader_VercelPresetResolvesOnlyFromEnvironment()
+        {
+            const string testValue = "local-bypass-test";
+            string variable = IndieableRequestHeader
+                .VercelProtectionBypassEnvironmentVariable;
+            string previous = Environment.GetEnvironmentVariable(variable);
+            try
+            {
+                Environment.SetEnvironmentVariable(variable, testValue);
+                IndieableRequestHeader header = IndieableRequestHeader
+                    .CreateVercelProtectionBypass();
+
+                Assert.That(header.Value, Is.Empty);
+                Assert.That(
+                    header.ValueEnvironmentVariable,
+                    Is.EqualTo(variable));
+                Assert.That(
+                    header.TryResolve(out string name, out string value),
+                    Is.True);
+                Assert.That(
+                    name,
+                    Is.EqualTo("x-vercel-protection-bypass"));
+                Assert.That(value, Is.EqualTo(testValue));
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(variable, previous);
+            }
+        }
+
+        [Test]
+        public void RequestHeader_RejectsSdkOwnedAndNewlineValues()
+        {
+            var owned = new IndieableRequestHeader
+            {
+                Name = "Authorization",
+                Value = "not-allowed"
+            };
+            var newline = new IndieableRequestHeader
+            {
+                Name = "x-test",
+                Value = "first\nsecond"
+            };
+
+            Assert.That(owned.TryValidate(out _), Is.False);
+            Assert.That(newline.TryValidate(out _), Is.False);
+        }
     }
 }

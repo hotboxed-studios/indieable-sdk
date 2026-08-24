@@ -23,6 +23,26 @@ Constructing `IndieableClient` is local. `GetPrivacyManifestAsync` reads the pub
 notice without creating a session. `ConnectAsync` creates or resumes the explicitly
 requested Connect session.
 
+Optional headers can be applied to every request before constructing the
+client. Do not place private credentials in source control:
+
+```csharp
+var options = new IndieableClientOptions
+{
+    BaseUrl = "https://preview.indieable.com",
+    PublicGameKey = "ind_pub_replace_me"
+};
+var vercelBypass = Environment.GetEnvironmentVariable(
+    "VERCEL_AUTOMATION_BYPASS_SECRET");
+if (!string.IsNullOrWhiteSpace(vercelBypass))
+{
+    options.RequestHeaders.Add(
+        "x-vercel-protection-bypass",
+        vercelBypass);
+}
+await using var indieable = new IndieableClient(options);
+```
+
 ## Optional telemetry
 
 ```csharp

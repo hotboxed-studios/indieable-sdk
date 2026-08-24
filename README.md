@@ -17,8 +17,8 @@ credentials, or deployment configuration.
 
 | Channel | Intended use | Version form |
 |---|---|---|
-| **Stable** | Normal development and production integration | `0.4.1` |
-| **Nightly** | Indieable development, early integration, and Unity testing | `0.4.1-nightly.YYYYMMDD.RUN` |
+| **Stable** | Normal development and production integration | `0.4.2` |
+| **Nightly** | Indieable development, early integration, and Unity testing | `0.4.2-nightly.YYYYMMDD.RUN` |
 
 - [Stable and historical releases](../../releases)
 - [Current Nightly release](../../releases/tag/nightly)
@@ -37,7 +37,7 @@ Window → Package Manager → + → Add package from tarball…
 A public tagged version can also be installed through:
 
 ```text
-https://github.com/hotboxed-studios/indieable-sdk.git#v0.4.1
+https://github.com/hotboxed-studios/indieable-sdk.git#v0.4.2
 ```
 
 For current integration testing:
@@ -214,6 +214,23 @@ public sealed class IndieableBootstrap : MonoBehaviour
 and a previously permitted local Installation credential but makes no request.
 `Indieable.GetPrivacyManifest(...)` can be called before `Connect()` without
 creating a session or persistent identifier.
+
+### Optional request headers
+
+`Project Settings > Indieable` can author optional headers applied to every SDK
+request. Literal values are build-included project data and must never contain
+private credentials. For a protected Vercel development deployment, select
+**Add Vercel Protection Bypass**. The preset stores only:
+
+```text
+Header: x-vercel-protection-bypass
+Environment variable: VERCEL_AUTOMATION_BYPASS_SECRET
+```
+
+Define that variable locally before starting the Unity Editor. Missing
+environment variables cause the optional header to be skipped. The SDK rejects
+duplicate, malformed, newline-bearing, and SDK-owned headers such as
+`Authorization` and `Content-Type`.
 
 ## Client credential boundary
 

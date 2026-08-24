@@ -29,6 +29,7 @@ namespace IndieableSdk
         private readonly Uri _baseUri;
         private readonly HttpClient _httpClient;
         private readonly bool _ownsHttpClient;
+        private readonly KeyValuePair<string, string>[] _requestHeaders;
         private readonly IIndieableIdentityStorage _identityStorage;
         private readonly string _identityStorageKey;
         private readonly SemaphoreSlim _identityGate = new(1, 1);
@@ -49,6 +50,12 @@ namespace IndieableSdk
                     nameof(options));
 
             _baseUri = ValidateBaseUrl(options.BaseUrl);
+            ValidateRequestHeaders(options.RequestHeaders);
+            _requestHeaders = options.RequestHeaders
+                .Select(header => new KeyValuePair<string, string>(
+                    header.Key.Trim(),
+                    header.Value))
+                .ToArray();
             _identityStorage = options.IdentityStorage ??
                 new IndieableFileIdentityStorage();
             _identityStorageKey = string.Join(
@@ -645,6 +652,13 @@ namespace IndieableSdk
                         _sessionToken);
             }
 
+            foreach (var header in _requestHeaders)
+            {
+                request.Headers.TryAddWithoutValidation(
+                    header.Key,
+                    header.Value);
+            }
+
             if (body != null)
             {
                 var json = JsonSerializer.Serialize(
@@ -913,6 +927,51 @@ namespace IndieableSdk
                     nameof(baseUrl));
 
             return uri;
+        }
+
+        private static void ValidateRequestHeaders(
+            IEnumerable<KeyValuePair<string, string>> headers)
+        {
+            foreach (var header in headers)
+            {
+                var name = (header.Key ?? "").Trim();
+                var value = header.Value ?? "";
+                if (name.Length == 0 ||
+                    !IsValidRequestHeaderName(name) ||
+                    value.Length == 0 ||
+                    value.Contains('\r') ||
+                    value.Contains('\n') ||
+                    IsReservedRequestHeader(name))
+                {
+                    throw new ArgumentException(
+                        "RequestHeaders contains an invalid or SDK-owned header.",
+                        nameof(headers));
+                }
+            }
+        }
+
+        private static bool IsValidRequestHeaderName(string value)
+        {
+            for (var index = 0; index < value.Length; index++)
+            {
+                var character = value[index];
+                if (char.IsLetterOrDigit(character) ||
+                    "!#$%&'*+-.^_`|~".IndexOf(character) >= 0)
+                    continue;
+                return false;
+            }
+            return true;
+        }
+
+        private static bool IsReservedRequestHeader(string name)
+        {
+            return string.Equals(name, "Accept", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(name, "Authorization", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(name, "Content-Length", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(name, "Content-Type", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(name, "Cookie", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(name, "Host", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(name, "User-Agent", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string NormalizeEnvironment(

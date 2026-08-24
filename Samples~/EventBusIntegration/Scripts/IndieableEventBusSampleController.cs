@@ -36,6 +36,7 @@ namespace IndieableSdk.Samples.EventBus
         private IDisposable _localEventSubscription;
         private IndieablePrivacyManifest _manifest;
         private IndieablePrivacyPreferences _preferences;
+        private IndieableProjectSettings _projectSettings;
 
         private TextField _baseUrlField;
         private TextField _publicGameKeyField;
@@ -211,23 +212,23 @@ namespace IndieableSdk.Samples.EventBus
         {
             if (_baseUrlField == null) return;
 
-            IndieableProjectSettings projectSettings =
+            _projectSettings =
                 IndieableProjectSettings.Load();
-            if (projectSettings != null)
+            if (_projectSettings != null)
             {
-                baseUrl = projectSettings.BaseUrl;
-                environment = projectSettings.Environment;
-                localProfileRef = projectSettings.LocalProfileRef;
+                baseUrl = _projectSettings.BaseUrl;
+                environment = _projectSettings.Environment;
+                localProfileRef = _projectSettings.LocalProfileRef;
                 if (!string.IsNullOrWhiteSpace(
-                        projectSettings.PublicGameKey))
+                        _projectSettings.PublicGameKey))
                 {
-                    publicGameKey = projectSettings.PublicGameKey;
+                    publicGameKey = _projectSettings.PublicGameKey;
                 }
                 if (eventBusBridge != null &&
-                    projectSettings.EventRouting != null)
+                    _projectSettings.EventRouting != null)
                 {
                     eventBusBridge.RoutingSettings =
-                        projectSettings.EventRouting;
+                        _projectSettings.EventRouting;
                 }
             }
 
@@ -304,28 +305,31 @@ namespace IndieableSdk.Samples.EventBus
                 return;
             }
 
-            Indieable.Initialize(new IndieableOptions
+            IndieableOptions options = _projectSettings != null
+                ? _projectSettings.CreateOptions()
+                : new IndieableOptions();
+            options.BaseUrl = (_baseUrlField.value ?? "").Trim();
+            options.PublicGameKey = key;
+            options.BuildVersion = Application.version;
+            options.Environment = string.IsNullOrWhiteSpace(
+                    _environmentField.value)
+                ? "development"
+                : _environmentField.value.Trim();
+            options.Engine = "Unity";
+            options.EngineVersion = Application.unityVersion;
+            options.Platform = Application.platform.ToString();
+            options.LocalProfileRef =
+                (_localProfileField.value ?? "").Trim();
+            options.LogErrors = true;
+            options.PrivacyVisibilityChanged = delegate(bool visible)
             {
-                BaseUrl = (_baseUrlField.value ?? "").Trim(),
-                PublicGameKey = key,
-                BuildVersion = Application.version,
-                Environment = string.IsNullOrWhiteSpace(_environmentField.value)
-                    ? "development"
-                    : _environmentField.value.Trim(),
-                Engine = "Unity",
-                EngineVersion = Application.unityVersion,
-                Platform = Application.platform.ToString(),
-                LocalProfileRef = (_localProfileField.value ?? "").Trim(),
-                LogErrors = true,
-                PrivacyVisibilityChanged = delegate(bool visible)
-                {
-                    Log("SDK default privacy UI visible: " + visible + ".");
-                },
-                FeedbackVisibilityChanged = delegate(bool visible)
-                {
-                    Log("SDK feedback UI visible: " + visible + ".");
-                }
-            });
+                Log("SDK default privacy UI visible: " + visible + ".");
+            };
+            options.FeedbackVisibilityChanged = delegate(bool visible)
+            {
+                Log("SDK feedback UI visible: " + visible + ".");
+            };
+            Indieable.Initialize(options);
 
             if (!Indieable.IsInitialized)
             {

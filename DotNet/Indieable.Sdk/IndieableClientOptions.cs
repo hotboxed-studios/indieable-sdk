@@ -1,4 +1,5 @@
 using System.Net.Http;
+using System.Collections.Generic;
 
 namespace IndieableSdk
 {
@@ -10,7 +11,7 @@ namespace IndieableSdk
     {
         public string BaseUrl { get; set; } = "https://indieable.com";
         public string PublicGameKey { get; set; } = "";
-        public string SdkVersion { get; set; } = "dotnet-0.4.1";
+        public string SdkVersion { get; set; } = "dotnet-0.4.2";
         public string BuildVersion { get; set; } = "";
         public string Platform { get; set; } = "";
         public string Environment { get; set; } = "production";
@@ -19,6 +20,15 @@ namespace IndieableSdk
         public string LocalProfileRef { get; set; } = "";
         public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromSeconds(15);
         public bool AutoClearInvalidIdentity { get; set; } = true;
+
+        /// <summary>
+        /// Optional public or locally resolved headers applied to every
+        /// request. SDK-owned headers such as Authorization and Content-Type
+        /// cannot be overridden.
+        /// </summary>
+        public IDictionary<string, string> RequestHeaders { get; } =
+            new Dictionary<string, string>(
+                StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Optional host-owned HttpClient. The Indieable client never disposes it.

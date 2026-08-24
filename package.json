@@ -1,6 +1,6 @@
 {
   "name": "com.indieable.sdk",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "displayName": "Indieable Connect",
   "description": "Privacy-aware Unity client for Indieable sessions, game-scoped identity, event-bus and direct gameplay telemetry, playtest feedback, bug reports, and Community Challenges.",
   "license": "MIT",

@@ -7,6 +7,22 @@ The packages follow Semantic Versioning. Nightly artifacts use
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-08-23
+
+### Added
+
+- Added validated optional request headers to the Unity and generic .NET
+  clients.
+- Added a Unity Project Settings button for a Vercel deployment-protection
+  bypass header whose value resolves from
+  `VERCEL_AUTOMATION_BYPASS_SECRET` instead of a serialized secret.
+
+### Security
+
+- Optional headers reject duplicate or malformed names, newline-bearing
+  values, and SDK-owned headers such as Authorization and Content-Type.
+- Missing environment variables skip their header without logging its value.
+
 ## [0.4.1] - 2026-08-23
 
 ### Added
@@ -69,6 +85,7 @@ The packages follow Semantic Versioning. Nightly artifacts use
 - Full-history secret scanning, strict package allowlisting, package validation,
   and a zero-secret C# compile check.
 
-[Unreleased]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/hotboxed-studios/indieable-sdk/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/hotboxed-studios/indieable-sdk/releases/tag/v0.4.0
