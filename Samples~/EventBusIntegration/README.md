@@ -117,7 +117,8 @@ run_completed
 4. Publish the game's Player Data notice.
 5. Enter Play Mode. The SDK initializes before scene `Awake`; the sample applies
    its editable UI assets during `Awake`; then the SDK opens the bottom-right
-   UI Toolkit consent card after the first scene loads. It remains until the
+   UI Toolkit consent card after the first scene loads. Feedback and Bug Report
+   use larger centered, dimmed modals. Startup consent remains until the
    Player explicitly declines or saves. A successful choice records the current
    notice version; a failed load does not.
 6. Fire sample gameplay events and inspect the local activity log and Indieable

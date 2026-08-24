@@ -125,7 +125,7 @@ namespace IndieableSdk
     {
         public string BaseUrl = "https://indieable.com";
         public string PublicGameKey = "";
-        public string SdkVersion = "unity-0.6.0";
+        public string SdkVersion = "unity-0.6.1";
         public string BuildVersion = "";
         public string Platform = "";
         public string Environment = "production";

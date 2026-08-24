@@ -217,22 +217,33 @@ def main() -> int:
             errors,
         )
 
-    for stylesheet_name in (
-        "IndieableSamplePrivacy.uss",
-        "IndieableSampleFeedback.uss",
-    ):
-        stylesheet = UI / stylesheet_name
-        if stylesheet.is_file():
-            require_markers(
-                stylesheet.read_text(encoding="utf-8"),
-                (
-                    "align-items: flex-end",
-                    "justify-content: flex-end",
-                    "background-color:",
-                ),
-                f"sample {stylesheet_name}",
-                errors,
-            )
+    privacy_styles = UI / "IndieableSamplePrivacy.uss"
+    if privacy_styles.is_file():
+        require_markers(
+            privacy_styles.read_text(encoding="utf-8"),
+            (
+                "align-items: flex-end",
+                "justify-content: flex-end",
+                "background-color:",
+            ),
+            "sample IndieableSamplePrivacy.uss",
+            errors,
+        )
+
+    feedback_styles = UI / "IndieableSampleFeedback.uss"
+    if feedback_styles.is_file():
+        require_markers(
+            feedback_styles.read_text(encoding="utf-8"),
+            (
+                "align-items: center",
+                "justify-content: center",
+                "background-color: rgba(8, 8, 12, 0.76)",
+                "width: 920px",
+                "height: 86%",
+            ),
+            "sample IndieableSampleFeedback.uss",
+            errors,
+        )
 
     uxml_path = (
         RESOURCES / "IndieableEventBusSample.uxml"

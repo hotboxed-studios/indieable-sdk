@@ -180,8 +180,11 @@ Test Unity 2022.3 and Unity 6:
 - sample scene opens without missing scripts;
 - routing asset resolves;
 - UI Toolkit popup fits 1280×720, 1920×1080, and a narrow window;
-- consent, feedback, and bug-report surfaces render as bounded bottom-right
-  cards instead of full-screen panels;
+- consent renders as the bounded bottom-right Player Data card;
+- feedback and bug-report surfaces render as centered, dimmed, near-fullscreen
+  modals using the same visual language;
+- a manually opened unavailable Player Data card exposes Close, while startup
+  consent remains non-dismissible;
 - startup consent has no dismiss-only action and remains until Save or Decline;
 - Feedback and Bug Report remain until Send, Cancel, or Close;
 - keyboard focus can reach all controls;

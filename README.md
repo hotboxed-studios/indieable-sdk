@@ -17,8 +17,8 @@ credentials, or deployment configuration.
 
 | Channel | Intended use | Version form |
 |---|---|---|
-| **Stable** | Normal development and production integration | `0.6.0` |
-| **Nightly** | Indieable development, early integration, and Unity testing | `0.6.0-nightly.YYYYMMDD.RUN` |
+| **Stable** | Normal development and production integration | `0.6.1` |
+| **Nightly** | Indieable development, early integration, and Unity testing | `0.6.1-nightly.YYYYMMDD.RUN` |
 
 - [Stable and historical releases](../../releases)
 - [Current Nightly release](../../releases/tag/nightly)
@@ -37,7 +37,7 @@ Window → Package Manager → + → Add package from tarball…
 A public tagged version can also be installed through:
 
 ```text
-https://github.com/hotboxed-studios/indieable-sdk.git#v0.6.0
+https://github.com/hotboxed-studios/indieable-sdk.git#v0.6.1
 ```
 
 For current integration testing:
@@ -119,9 +119,11 @@ enabled, the SDK loads these settings before the first scene's `Awake`. With
 **Show Startup Consent** enabled, its built-in bottom-right UI Toolkit card opens
 after the first scene loads and only returns for a new notice version until the
 Player explicitly saves or declines. It has no dismiss-only action. Failed,
-batch-mode, and headless attempts never mark the notice as answered. Feedback
-and Bug Report use the same bounded bottom-right presentation and remain visible
-until the Player sends, cancels, or closes a completed/error state.
+batch-mode, and headless attempts never mark the notice as answered. A manually
+opened Player Data card can close if the notice is unavailable. Feedback and
+Bug Report use the same visual language in larger centered, dimmed modals and
+remain visible until the Player sends, cancels, or closes a completed/error
+state.
 
 ## Global event bus
 

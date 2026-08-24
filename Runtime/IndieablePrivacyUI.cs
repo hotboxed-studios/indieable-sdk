@@ -29,20 +29,26 @@ namespace IndieableSdk
         private bool _canChoose;
         private bool _telemetryAvailable;
         private bool _diagnosticsAvailable;
+        private bool _initialPrompt;
         private bool _visibilityReported;
 
         internal static bool IsOpen => _instance != null;
 
+        internal static bool CanCloseUnavailable(bool initialPrompt)
+        {
+            return !initialPrompt;
+        }
+
         internal static void Open(IndieableClient client)
         {
-            OpenInternal(client, null);
+            OpenInternal(client, null, false);
         }
 
         internal static void OpenInitial(
             IndieableClient client,
             IndieablePrivacyManifest manifest)
         {
-            OpenInternal(client, manifest);
+            OpenInternal(client, manifest, true);
         }
 
         internal static void Close()
@@ -59,16 +65,18 @@ namespace IndieableSdk
 
         private static void OpenInternal(
             IndieableClient client,
-            IndieablePrivacyManifest manifest)
+            IndieablePrivacyManifest manifest,
+            bool initialPrompt)
         {
             if (client == null) return;
             if (_instance != null)
             {
                 _instance._client = client;
+                _instance._initialPrompt |= initialPrompt;
                 if (manifest != null)
                 {
                     _instance._manifest = manifest;
-                    _instance.PopulateManifest();
+                    _instance.OnManifestLoaded(manifest);
                 }
                 return;
             }
@@ -78,7 +86,7 @@ namespace IndieableSdk
             host.hideFlags = HideFlags.HideAndDontSave;
             DontDestroyOnLoad(host);
             var instance = host.AddComponent<IndieablePrivacyUI>();
-            if (!instance.Initialize(client, manifest))
+            if (!instance.Initialize(client, manifest, initialPrompt))
             {
                 Destroy(host);
                 return;
@@ -92,12 +100,14 @@ namespace IndieableSdk
 
         private bool Initialize(
             IndieableClient client,
-            IndieablePrivacyManifest manifest)
+            IndieablePrivacyManifest manifest,
+            bool initialPrompt)
         {
             _client = client;
             _settings = IndieableAutoBootstrap.Settings ??
                 IndieableProjectSettings.Load();
             _manifest = manifest;
+            _initialPrompt = initialPrompt;
 
             if (!IndieableUiToolkitFactory.TryCreateDocument(
                     gameObject,
@@ -128,7 +138,7 @@ namespace IndieableSdk
             _retry = Require<Button>(root, "retry");
 
             _privacyPolicy.clicked += OpenPrivacyPolicy;
-            _decline.clicked += () => SaveChoices(false, false);
+            _decline.clicked += HandleDecline;
             _save.clicked += () => SaveChoices(
                 _telemetryToggle.value,
                 _diagnosticsToggle.value);
@@ -203,6 +213,11 @@ namespace IndieableSdk
         {
             _canChoose = false;
             SetBusy(false, message);
+            if (CanCloseUnavailable(_initialPrompt) && _decline != null)
+            {
+                _decline.text = "Close";
+                _decline.SetEnabled(true);
+            }
             if (_retry != null)
                 _retry.style.display = DisplayStyle.Flex;
         }
@@ -210,6 +225,9 @@ namespace IndieableSdk
         private void PopulateManifest()
         {
             if (_manifest == null) return;
+
+            if (_decline != null)
+                _decline.text = "Continue without optional data";
 
             _gameTitle.text = string.IsNullOrWhiteSpace(
                     _manifest.GameTitle)
@@ -327,6 +345,17 @@ namespace IndieableSdk
                         : "The choice could not be saved."));
         }
 
+        private void HandleDecline()
+        {
+            if (!_canChoose)
+            {
+                if (CanCloseUnavailable(_initialPrompt)) Close();
+                return;
+            }
+
+            SaveChoices(false, false);
+        }
+
         private void SavePreference(
             string purpose,
             bool enabledValue,
@@ -382,7 +411,10 @@ namespace IndieableSdk
                 choicesEnabled && _telemetryAvailable);
             _diagnosticsToggle?.SetEnabled(
                 choicesEnabled && _diagnosticsAvailable);
-            _decline?.SetEnabled(choicesEnabled);
+            _decline?.SetEnabled(
+                choicesEnabled ||
+                (!busy && !_canChoose &&
+                 CanCloseUnavailable(_initialPrompt)));
             _save?.SetEnabled(choicesEnabled);
             _retry?.SetEnabled(!busy);
         }

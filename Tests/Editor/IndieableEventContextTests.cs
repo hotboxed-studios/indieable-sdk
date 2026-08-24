@@ -285,7 +285,7 @@ namespace IndieableSdk.Tests
         }
 
         [Test]
-        public void SupportUiLayouts_ExposeBoundedCardContracts()
+        public void SupportUiLayouts_ExposeSupportSurfaceContracts()
         {
             TemplateContainer privacy = Resources
                 .Load<VisualTreeAsset>("IndieablePrivacyPreferences")
@@ -305,6 +305,39 @@ namespace IndieableSdk.Tests
                 Is.Not.Null);
             Assert.That(feedback.Q<Button>("feedback-send"), Is.Not.Null);
             Assert.That(feedback.Q<TextField>("bug-title"), Is.Not.Null);
+        }
+
+        [Test]
+        public void PrivacySurface_OnlyAllowsUnavailableManualViewToClose()
+        {
+            Assert.That(
+                IndieablePrivacyUI.CanCloseUnavailable(false),
+                Is.True);
+            Assert.That(
+                IndieablePrivacyUI.CanCloseUnavailable(true),
+                Is.False);
+        }
+
+        [Test]
+        public void FeedbackSurface_UsesCenteredDimmedModalStyles()
+        {
+            MonoScript script = AssetDatabase.LoadAssetAtPath<MonoScript>(
+                "Packages/com.indieable.sdk/Runtime/IndieableFeedbackUI.cs");
+            Assert.That(script, Is.Not.Null);
+
+            string packageRoot = System.IO.Path.GetDirectoryName(
+                AssetDatabase.GetAssetPath(script));
+            string styles = System.IO.File.ReadAllText(
+                System.IO.Path.Combine(
+                    packageRoot,
+                    "Resources",
+                    "IndieableFeedback.uss"));
+            Assert.That(styles, Does.Contain("align-items: center"));
+            Assert.That(styles, Does.Contain("justify-content: center"));
+            Assert.That(
+                styles,
+                Does.Contain("background-color: rgba(8, 8, 12, 0.76)"));
+            Assert.That(styles, Does.Contain("width: 920px"));
         }
 
         [Test]

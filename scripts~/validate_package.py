@@ -416,6 +416,7 @@ def validate(root: Path) -> list[str]:
             "UnityEngine.UIElements",
             "IndieableUiToolkitFactory",
             "SaveChoices",
+            "CanCloseUnavailable",
             "RecordDecision",
             'Require<Button>(root, "retry")',
         ),
@@ -481,21 +482,30 @@ def validate(root: Path) -> list[str]:
             errors,
         )
 
-    for stylesheet_name in (
-        "IndieablePrivacyPreferences.uss",
-        "IndieableFeedback.uss",
-    ):
-        stylesheet = root / "Runtime/Resources" / stylesheet_name
-        if stylesheet.is_file():
-            require_markers(
-                stylesheet,
-                (
-                    "align-items: flex-end",
-                    "justify-content: flex-end",
-                    "background-color:",
-                ),
-                errors,
-            )
+    privacy_styles = (
+        root / "Runtime/Resources/IndieablePrivacyPreferences.uss"
+    )
+    require_markers(
+        privacy_styles,
+        (
+            "align-items: flex-end",
+            "justify-content: flex-end",
+            "background-color:",
+        ),
+        errors,
+    )
+    feedback_styles = root / "Runtime/Resources/IndieableFeedback.uss"
+    require_markers(
+        feedback_styles,
+        (
+            "align-items: center",
+            "justify-content: center",
+            "background-color: rgba(8, 8, 12, 0.76)",
+            "width: 920px",
+            "height: 86%",
+        ),
+        errors,
+    )
 
     provider_specific_text = "\n".join(
         path.read_text(encoding="utf-8", errors="replace")
