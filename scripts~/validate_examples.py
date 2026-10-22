@@ -48,6 +48,15 @@ REQUIRED_DOTNET_FILES = (
     "DotNet~/Indieable.Sdk/IndieableEventBusForwarder.cs",
     "ci~/CoreSmoke/CoreSmoke.csproj",
     "ci~/CoreSmoke/Program.cs",
+    "ci~/CoreSmoke/WorkflowSmoke.cs",
+    "ci~/WorkflowContract/WorkflowContract.csproj",
+    "ci~/WorkflowContract/Program.cs",
+    "DotNet~/Indieable.Sdk/DeveloperWorkflow/WorkflowBackendClient.cs",
+    "DotNet~/Indieable.Sdk/DeveloperWorkflow/WorkflowSessionClient.cs",
+    "DotNet~/Indieable.Sdk/DeveloperWorkflow/WorkflowModels.cs",
+    "DotNet~/Indieable.Sdk/DeveloperWorkflow/WorkflowTransport.cs",
+    "DotNet~/Indieable.Sdk/DeveloperWorkflow/WorkflowEventBuffer.cs",
+    "Documentation~/DEVELOPER-WORKFLOW.md",
     "ci~/CompileCheck/EventBusUnityStubs.cs",
 )
 

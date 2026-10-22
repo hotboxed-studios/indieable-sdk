@@ -7,6 +7,24 @@ The packages follow Semantic Versioning. Nightly artifacts use
 
 ## [Unreleased]
 
+### Added
+
+- Added a .NET-only developer-workflow v2 integration: explicit player-minted
+  linking proofs, issuer-bound game-backend identity, short-lived sessions,
+  server-verified and client-reported events, configured feedback-form retrieval,
+  custom question answers, and anonymous or linked feedback.
+- Added bounded retry-safe HTTP delivery, structured integration errors,
+  nonthrowing analytics results, and an optional bounded in-memory event buffer.
+- Added transport smoke coverage and a loopback-only live contract harness
+  against the matching Indieable web implementation.
+
+### Compatibility
+
+- Retained the existing Unity and generic v1 surfaces for the earlier Connect
+  backend. They do not implement the new web branch's v2 workflow. No v2 backend
+  credential is shipped in the Unity package, samples, or client configuration.
+- No stable release or package publication is made by this branch.
+
 ## [0.6.1] - 2026-08-24
 
 ### Changed

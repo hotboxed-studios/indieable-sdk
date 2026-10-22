@@ -3,6 +3,12 @@
 `DotNet~/Indieable.Sdk` is the engine-agnostic C# client shipped beside the Unity
 Package Manager package.
 
+For the developer-workflow web branch, use the new
+`IndieableSdk.DeveloperWorkflow.WorkflowBackendClient` and
+`WorkflowSessionClient`. See the [v2 guide](../Documentation~/DEVELOPER-WORKFLOW.md).
+The original `IndieableClient` and Unity adapters remain v1 compatibility
+surfaces requiring the earlier backend; they do not target the new web branch.
+
 Build and pack locally:
 
 ```bash

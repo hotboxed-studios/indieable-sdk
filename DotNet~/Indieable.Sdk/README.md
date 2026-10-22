@@ -3,6 +3,57 @@
 Engine-agnostic C# client for Indieable. It targets .NET 8 and is built from the
 same public repository as the Unity package.
 
+## Developer-workflow v2
+
+Use `IndieableSdk.DeveloperWorkflow` for the new developer-workflow web branch.
+Its APIs are `/api/connect/v2/{links,sessions,events,feedback}` and the
+session-authenticated `GET /api/connect/v2/feedback/config`. Render that returned
+configuration's survey questions in your engine's UI and submit the player's
+answers keyed by those exact questions; no duplicated form definition is needed.
+
+```csharp
+using IndieableSdk.DeveloperWorkflow;
+
+// Trusted backend only; load the credential from the host's secret store.
+using var backend = new WorkflowBackendClient(
+    new WorkflowOptions { BaseUrl = "https://indieable.com" },
+    Environment.GetEnvironmentVariable("INDIEABLE_WORKFLOW_CREDENTIAL")
+        ?? throw new InvalidOperationException("Missing backend credential"));
+
+// Your game first authenticates this opaque account ID. The player explicitly
+// supplies a short-lived, one-use link code, never their contact-management token.
+var linked = await backend.LinkAsync(
+    authenticatedAccountId,
+    new WorkflowLinkProof(playerSuppliedLinkCode),
+    stableLinkRequestId);
+
+var session = await backend.CreateSessionAsync(new WorkflowSessionRequest
+{
+    Subject = authenticatedAccountId,
+    TelemetryConsent = playerHasChosenGameplayData,
+    RoundId = playtestRoundId,
+    Build = "test-build-1"
+});
+
+// Use only for observations your game backend actually verified.
+var outcome = await backend.TrySendVerifiedEventsAsync(
+    session.SessionToken,
+    new[] { new WorkflowEvent { Key = "session.started" } },
+    Guid.NewGuid());
+// A temporary outage produces outcome.Error; it need not interrupt gameplay.
+```
+
+The [full integration guide](https://github.com/hotboxed-studios/indieable-sdk/blob/codex/developer-player-workflow/Documentation~/DEVELOPER-WORKFLOW.md)
+covers scoped linking proof, consent, feedback without telemetry, nonblocking
+delivery, retries, bounds, trust, and the live local contract harness. This branch
+has not been published; build the package locally against the matching web branch.
+
+## Existing v1 client
+
+The original `IndieableClient` below requires the older Connect backend. These
+v1 endpoints are not present in the new developer-workflow web branch. The v2
+backend credential must never be used as a v1 Public Game Key.
+
 ```csharp
 using IndieableSdk;
 

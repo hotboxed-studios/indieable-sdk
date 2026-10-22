@@ -51,6 +51,10 @@ PATTERNS = [
     SecretPattern("JWT", re.compile(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}")),
     SecretPattern("Indieable server credential", re.compile(r"ind_(?:sec|srv)_[A-Za-z0-9_-]{8,}")),
     SecretPattern(
+        "Indieable workflow credential",
+        re.compile(r"dw_(?:server|session|manage|link|confirm)_[A-Za-z0-9_-]{24,}"),
+    ),
+    SecretPattern(
         "hard-coded secret assignment",
         re.compile(
             r"(?i)(?:api[_-]?key|client[_-]?secret|server[_-]?secret|password|private[_-]?key|access[_-]?token|refresh[_-]?token)"

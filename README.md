@@ -1,8 +1,46 @@
 # Indieable Connect
 
-Indieable Connect is the public SDK repository for Indieable sessions,
-privacy-aware game-scoped identity, longitudinal gameplay telemetry, account
-linking, in-game playtest forms, and Community Challenges.
+Indieable Connect is the public SDK repository for Indieable's independent
+player and playtesting workflow.
+
+## Developer workflow on this branch
+
+The supported contract for the developer-workflow web branch is
+`/api/connect/v2`, implemented by the .NET 8
+`IndieableSdk.DeveloperWorkflow` clients in `DotNet~/Indieable.Sdk`:
+
+- `WorkflowBackendClient` links an account authenticated by your game backend,
+  creates short-lived sessions, and submits observations that backend verified.
+- `WorkflowSessionClient` submits client-reported observations and feedback using
+  only a short-lived session credential and retrieves the game's configured
+  feedback questions for its pinned round.
+- `WorkflowEventBuffer` optionally delivers through a bounded, in-memory queue
+  without waiting on the network in a gameplay callback.
+
+Your game keeps its own login. A player explicitly creates a short-lived link
+code from an Indieable audience confirmation or personal playtest link. The
+game backend receives only that scoped code; it never receives the player's
+contact-management credential. Email is a contact method, not an account key.
+Gameplay permission and marketing permission remain separate.
+
+Organizations own games and their subscriptions. Owners and Admins manage the
+game's integrations; Members have a masked read-only workspace. Credentials and
+sessions are scoped to the current game/organization and issuing operator, with
+revocation on relevant membership, credential-generation, or ownership changes.
+An individual's paid access never grants another organization paid features.
+
+Start with the [v2 integration guide](Documentation~/DEVELOPER-WORKFLOW.md).
+Website recruitment, private tests, access distribution, messages, and ordinary
+feedback work without any SDK. No package has been published for this branch.
+
+## Existing v1 clients
+
+The Unity package and original `IndieableClient` below are retained for existing
+`/api/connect/v1` integrations. Those APIs depend on the earlier Connect/preview
+backend and are **not implemented by the new web branch**. Installing the UPM
+package alone does not connect a game to v2. Do not put a v2 backend credential
+into Unity project settings, client binaries, or browser JavaScript. The v2
+backend implementation is excluded from the UPM archive.
 
 The repository ships two client surfaces:
 
