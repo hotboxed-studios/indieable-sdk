@@ -1,5 +1,12 @@
 # Indieable Event Bus Integration
 
+> **SDK in development.** This is experimental or legacy maintainer material,
+> not the current product’s supported install path. Use the
+> [HTTP API guide](https://github.com/ConnorIllingworth/indieable/blob/codex/unified-player-workspaces/docs/DEVELOPER-WORKFLOW-API.md)
+> for current integrations. Unity/v1 setup does not connect to the current v2
+> application. Actual engine/export support has not been verified.
+
+
 This is the normal Unity Package Manager sample for Indieable. Import it from:
 
 ```text

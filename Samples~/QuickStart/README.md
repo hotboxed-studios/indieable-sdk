@@ -1,5 +1,12 @@
 # Quick Start sample
 
+> **SDK in development.** This is experimental or legacy maintainer material,
+> not the current product’s supported install path. Use the
+> [HTTP API guide](https://github.com/ConnorIllingworth/indieable/blob/codex/unified-player-workspaces/docs/DEVELOPER-WORKFLOW-API.md)
+> for current integrations. Unity/v1 setup does not connect to the current v2
+> application. Actual engine/export support has not been verified.
+
+
 Create the project-owned settings asset from **Project Settings > Indieable**,
 paste the game's Public Game Key, add `IndieableQuickStart` to a scene object,
 and enter Play Mode. The SDK initializes before scene `Awake` and opens its
