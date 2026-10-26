@@ -45,6 +45,10 @@ public sealed class WorkflowSession
     public string PlayerRef { get; init; } = "";
     public DateTimeOffset ExpiresAt { get; init; }
     public bool GameplayEnabled { get; init; }
+    /// <summary>Opaque server consent generation. Never infer or manufacture a grant from this value.</summary>
+    public string? ConsentGeneration { get; init; }
+    public DateTimeOffset? ConsentGrantedAt { get; init; }
+    public DateTimeOffset? CollectionStartedAt { get; init; }
     public override string ToString() => $"WorkflowSession({PlayerRef}, expires {ExpiresAt:O}, [redacted])";
 }
 
@@ -91,6 +95,8 @@ public sealed class WorkflowFeedbackRequest
 {
     public Guid RequestId { get; init; } = Guid.NewGuid();
     public int Rating { get; init; }
+    /// <summary>Return the exact revision fetched before the player reviewed the configured form.</summary>
+    public string FormRevision { get; init; } = "";
     public string? Liked { get; init; }
     public string? Confused { get; init; }
     /// <summary>Anonymous feedback is never silently attached to the player's history.</summary>
@@ -110,6 +116,9 @@ public sealed class WorkflowFeedbackConfig
     public string[] SurveyQuestions { get; init; } = Array.Empty<string>();
     public WorkflowFeedbackFields Fields { get; init; } = new();
     public bool AnonymousSupported { get; init; }
+    public string FormRevision { get; init; } = "";
+    public DateTimeOffset? FeedbackExpiresAt { get; init; }
+    public bool LegacyUnversionedSupported { get; init; }
 }
 
 public sealed class WorkflowFeedbackFields
@@ -150,13 +159,25 @@ public sealed class WorkflowException : Exception
     public string Code { get; }
     public int StatusCode { get; }
     public bool Retryable { get; }
+    /// <summary>Server's minimum delay, including long backoffs returned to the host without sleeping.</summary>
+    public TimeSpan? RetryAfter { get; }
+    public DateTimeOffset? RetryAt { get; }
+    /// <summary>An invalid/unbounded Retry-After must not become permission to retry early.</summary>
+    public bool RetryAfterUnusable { get; }
+    /// <summary>Discard all pending observations for this session. A new session must never inherit them.</summary>
+    public bool InvalidatesCollectionContext => StatusCode is 401 or 403 ||
+        Code is "consent_context_expired" or "consent_required" or "invalid_session" or "invalid_credential";
 
-    internal WorkflowException(string code, int statusCode, bool retryable)
+    internal WorkflowException(string code, int statusCode, bool retryable,
+        TimeSpan? retryAfter = null, DateTimeOffset? retryAt = null, bool retryAfterUnusable = false)
         : base($"Indieable request failed ({code}, HTTP {statusCode}).")
     {
         Code = code;
         StatusCode = statusCode;
         Retryable = retryable;
+        RetryAfter = retryAfter;
+        RetryAt = retryAt;
+        RetryAfterUnusable = retryAfterUnusable;
     }
 }
 

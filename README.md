@@ -2,8 +2,7 @@
 
 **SDK in development.** Use Indieable’s HTTP API for current integrations.
 
-The canonical [HTTP API guide](https://github.com/ConnorIllingworth/indieable/blob/codex/unified-player-workspaces/docs/DEVELOPER-WORKFLOW-API.md)
-explains trusted backend account linking, limited player sessions, optional
+Your Indieable deployment's `/docs/api` HTTP API guide explains trusted backend account linking, limited player sessions, optional
 activity, configured playtest feedback, consent and retry rules. The application’s
 Integrations workspace supplies the matching first-party guide. Website signup,
 private playtests, access distribution and ordinary feedback need no SDK.
@@ -37,5 +36,7 @@ a client. **Generic C#**, **GlobalEventBus** and **Event Bus Integration** remai
 development/legacy source references, not supported engine setup promises.
 
 Do not publish, change release workflows, or treat local/stub checks as engine
-acceptance. Internal SDK engine rehabilitation and structured long-backoff
-metadata remain future development; use the HTTP contract for supported setup.
+acceptance. The internal workflow core has versioned feedback, consent-context
+metadata, bounded in-memory delivery and structured retry timing.
+Those local contracts do not establish engine support or a released SDK; use
+the HTTP contract for supported setup.

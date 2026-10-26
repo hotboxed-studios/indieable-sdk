@@ -39,7 +39,7 @@ public sealed class WorkflowSessionClient : IDisposable
         catch (WorkflowException error) { return new(null, error); }
     }
 
-    /// <summary>Optional bounded, in-memory delivery. Overflow/offline failures drop analytics without blocking gameplay.</summary>
+    /// <summary>Bounded process-local delivery tied to this session. Transient failures pause until an eligible explicit retry.</summary>
     public WorkflowEventBuffer CreateEventBuffer(int capacity = 128) => new(TrySendReportedEventsAsync, capacity);
 
     /// <summary>Fetches the configured feedback fields and developer questions for this session's pinned playtest round.</summary>
@@ -51,7 +51,8 @@ public sealed class WorkflowSessionClient : IDisposable
             config.SurveyQuestions.Any(question => string.IsNullOrWhiteSpace(question) || question.Length > 200) ||
             config.Fields?.Rating is not { Min: 1, Max: 5, Required: true } ||
             config.Fields.Liked?.MaxLength != 2000 || config.Fields.Confused?.MaxLength != 2000 ||
-            config.Fields.Answers is not { MaxQuestions: 5, MaxLength: 1000 })
+            config.Fields.Answers is not { MaxQuestions: 5, MaxLength: 1000 } ||
+            !WorkflowValidation.FormRevision(config.FormRevision))
             throw new WorkflowException("invalid_response", 0, false);
         return config;
     }
@@ -61,6 +62,8 @@ public sealed class WorkflowSessionClient : IDisposable
     {
         ArgumentNullException.ThrowIfNull(input);
         WorkflowValidation.RequestId(input.RequestId);
+        if (!WorkflowValidation.FormRevision(input.FormRevision))
+            throw new ArgumentException("Fetch and review the configured feedback form, then return its exact FormRevision.", nameof(input));
         if (input.Rating is < 1 or > 5) throw new ArgumentException("Rating must be between one and five.", nameof(input));
         if (input.Liked?.Length > 2000 || input.Confused?.Length > 2000)
             throw new ArgumentException("Feedback fields must contain at most 2000 characters.", nameof(input));

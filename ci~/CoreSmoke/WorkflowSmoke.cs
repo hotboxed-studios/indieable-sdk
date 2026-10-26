@@ -40,12 +40,18 @@ internal static class WorkflowSmoke
                 {
                     session_token = SessionCredential,
                     player_ref = "gp_example",
-                    expires_at = DateTimeOffset.UtcNow.AddHours(1)
+                    expires_at = DateTimeOffset.UtcNow.AddHours(1), gameplay_enabled = true,
+                    consent_generation = "9007199254740993", consent_granted_at = DateTimeOffset.UtcNow.AddMinutes(-1),
+                    collection_started_at = DateTimeOffset.UtcNow
                 })),
                 "/api/connect/v2/events" when ++eventAttempts == 1 => Json("{\"error\":{\"code\":\"temporarily_unavailable\",\"retryable\":true}}", HttpStatusCode.ServiceUnavailable),
                 "/api/connect/v2/events" => Json("{\"accepted\":1,\"duplicates\":0,\"trust\":\"" + (credential == BackendCredential ? "server_verified" : "client_reported") + "\"}"),
                 "/api/connect/v2/feedback" => Json("{\"id\":\"a3c5f0cf-7709-46eb-9842-9687ebebda80\",\"duplicate\":false}"),
-                "/api/connect/v2/feedback/config" when request.Method == HttpMethod.Get => Json("{\"game_title\":\"Synthetic Game\",\"round_id\":\"a3c5f0cf-7709-46eb-9842-9687ebebda80\",\"build_label\":\"build-1\",\"focus\":\"Navigation\",\"survey_questions\":[\"Which path did you take?\"],\"fields\":{\"rating\":{\"min\":1,\"max\":5,\"required\":true},\"liked\":{\"max_length\":2000},\"confused\":{\"max_length\":2000},\"answers\":{\"max_questions\":5,\"max_length\":1000}},\"anonymous_supported\":true}"),
+                "/api/connect/v2/feedback/config" when request.Method == HttpMethod.Get => Json(JsonSerializer.Serialize(new {
+                    game_title = "Synthetic Game", round_id = "a3c5f0cf-7709-46eb-9842-9687ebebda80", build_label = "build-1", focus = "Navigation",
+                    survey_questions = new[] { "Which path did you take?" }, form_revision = new string('a', 64), feedback_expires_at = DateTimeOffset.UtcNow.AddDays(7),
+                    fields = new { rating = new { min = 1, max = 5, required = true }, liked = new { max_length = 2000 }, confused = new { max_length = 2000 }, answers = new { max_questions = 5, max_length = 1000 } },
+                    anonymous_supported = true, legacy_unversioned_supported = true })),
                 _ => throw new InvalidOperationException("Unexpected request path.")
             };
         }));
@@ -70,6 +76,7 @@ internal static class WorkflowSmoke
             Subject = "opaque-account-42", TelemetryConsent = true, Build = "example-build"
         });
         Assert(session.PlayerRef == link.PlayerRef, "Session player reference was not mapped.");
+        Assert(session.ConsentGeneration == "9007199254740993" && session.CollectionStartedAt >= session.ConsentGrantedAt, "Consent context was truncated or omitted.");
         Assert(!session.ToString().Contains(SessionCredential), "Session ToString exposed the token.");
         var requestId = Guid.NewGuid();
         var eventId = Guid.NewGuid();
@@ -93,7 +100,7 @@ internal static class WorkflowSmoke
         Assert(calls.Last().Body == "" && calls.Last().Credential == SessionCredential, "Feedback config retrieval had an unexpected body or credential.");
         var reported = await client.SendReportedEventsAsync(events, Guid.NewGuid());
         Assert(reported.Trust == "client_reported", "Reported receipt did not preserve trust.");
-        var feedback = await client.SubmitFeedbackAsync(new() { Rating = 4, Anonymous = true, Liked = "Clear onboarding\nUseful feedback", Answers = new Dictionary<string, string> { [config.SurveyQuestions[0]] = "The left path" } });
+        var feedback = await client.SubmitFeedbackAsync(new() { Rating = 4, FormRevision = config.FormRevision, Anonymous = true, Liked = "Clear onboarding\nUseful feedback", Answers = new Dictionary<string, string> { [config.SurveyQuestions[0]] = "The left path" } });
         Assert(feedback.Id != Guid.Empty && !feedback.Duplicate, "Feedback receipt was not mapped.");
         Assert(calls.Last().Credential == SessionCredential && !calls.Last().Body.Contains(BackendCredential), "Feedback carried the backend secret.");
         Assert(calls.Take(2).All(c => c.Credential == BackendCredential), "Link/session backend authentication was absent.");
@@ -163,7 +170,7 @@ internal static class WorkflowSmoke
             throw new InvalidOperationException("Unreachable.");
         }));
         using var client = new WorkflowSessionClient(new() { BaseUrl = "https://example.test", HttpClient = http }, SessionCredential);
-        var buffer = client.CreateEventBuffer(capacity: 1);
+        var buffer = client.CreateEventBuffer(capacity: 2);
         Assert(buffer.TryEnqueue(new() { Key = "session.started" }), "Buffer rejected its first event.");
         await entered.Task.WaitAsync(TimeSpan.FromSeconds(2));
         Assert(buffer.TryEnqueue(new() { Key = "session.ended" }), "Buffer rejected an available slot.");
@@ -185,6 +192,7 @@ internal static class WorkflowSmoke
         using var client = new WorkflowSessionClient(new() { BaseUrl = "https://example.test", HttpClient = http }, SessionCredential);
         var delivery = await client.TrySendReportedEventsAsync(new[] { new WorkflowEvent { Key = "session.started" } }, Guid.NewGuid());
         Assert(delivery.Error is { Code: "rate_limited", Retryable: true } && attempts == 1, "The SDK retried earlier than the server's Retry-After.");
+        Assert(delivery.Error!.RetryAfter == TimeSpan.FromSeconds(60) && delivery.Error.RetryAt > DateTimeOffset.UtcNow.AddSeconds(55), "Long backoff timing was lost before reaching the host.");
     }
 
     private static async Task MalformedErrorEnvelopesAsync()

@@ -6,7 +6,7 @@ using IndieableSdk.DeveloperWorkflow;
 // This harness deliberately permits loopback only. Fixture credentials are read from an ignored local file and never printed.
 try
 {
-    if (args.Length != 1) throw new ArgumentException("Usage: WorkflowContract <absolute-loopback-fixture-config.json>");
+    if (args.Length is < 1 or > 2) throw new ArgumentException("Usage: WorkflowContract <absolute-loopback-fixture-config.json> [separate-synthetic-player-control.json]");
     using var config = JsonDocument.Parse(await File.ReadAllTextAsync(args[0]));
     var root = config.RootElement;
     string Required(string key) => root.GetProperty(key).GetString() ?? throw new ArgumentException("Missing configuration field: " + key);
@@ -31,10 +31,14 @@ try
     var session = await backend.CreateSessionAsync(sessionRequest);
     Check(session.GameplayEnabled, "Stored gameplay permission");
     Check(session.PlayerRef == link.PlayerRef, "Session scoped player");
+    Check(session.ConsentGeneration != null && session.ConsentGrantedAt != null && session.CollectionStartedAt != null, "Consent collection context");
+    // Capture after session creation. Never backdate synthetic observations to
+    // manufacture playtime before this session's explicit collection context.
+    var capturedAt = DateTimeOffset.UtcNow;
     var observations = new List<WorkflowEvent>
     {
-        new() { Key = "session.started", OccurredAt = DateTimeOffset.UtcNow.AddSeconds(-90), Properties = new() { InstallationRef = "synthetic-installation", CharacterRef = "synthetic-character" } },
-        new() { Key = "session.ended", Properties = new() { DurationSeconds = 90 } }
+        new() { Key = "session.started", OccurredAt = capturedAt, Properties = new() { InstallationRef = "synthetic-installation", CharacterRef = "synthetic-character" } },
+        new() { Key = "session.ended", Properties = new() { DurationSeconds = 0 } }
     };
     if (root.TryGetProperty("milestone_key", out var milestone) && !string.IsNullOrWhiteSpace(milestone.GetString()))
         observations.Add(new() { Key = "milestone." + milestone.GetString() });
@@ -54,13 +58,13 @@ try
     Check(reported.Trust == "client_reported" && reported.Accepted == 1, "Client reported trust");
     var feedbackRequest = new WorkflowFeedbackRequest
     {
-        Rating = 4, Liked = "Synthetic SDK contract feedback", Confused = "Synthetic next-test question", RoundId = roundId,
+        Rating = 4, FormRevision = feedbackConfig.FormRevision, Liked = "Synthetic SDK contract feedback", Confused = "Synthetic next-test question", RoundId = roundId,
         Answers = feedbackConfig.SurveyQuestions.Distinct(StringComparer.Ordinal).ToDictionary(question => question, _ => "Synthetic configured answer")
     };
     var feedback = await client.SubmitFeedbackAsync(feedbackRequest);
     var repeatedFeedback = await client.SubmitFeedbackAsync(feedbackRequest);
     Check(feedback.Id != Guid.Empty && repeatedFeedback.Id == feedback.Id && repeatedFeedback.Duplicate, "Feedback idempotency");
-    var anonymous = await client.SubmitFeedbackAsync(new() { Rating = 3, Anonymous = true, RoundId = roundId, Liked = "Synthetic anonymous SDK feedback" });
+    var anonymous = await client.SubmitFeedbackAsync(new() { Rating = 3, FormRevision = feedbackConfig.FormRevision, Anonymous = true, RoundId = roundId, Liked = "Synthetic anonymous SDK feedback" });
     Check(anonymous.Id != Guid.Empty, "Anonymous feedback");
 
     var narrowSession = await backend.CreateSessionAsync(new()
@@ -68,8 +72,10 @@ try
         Subject = subject, TelemetryConsent = false, RoundId = roundId, Build = "sdk-feedback-only"
     });
     Check(!narrowSession.GameplayEnabled, "Feedback-only session");
+    Check(narrowSession.ConsentGeneration == null && narrowSession.ConsentGrantedAt == null && narrowSession.CollectionStartedAt == null, "No collection context for feedback-only session");
     using var narrowClient = new WorkflowSessionClient(options, narrowSession.SessionToken);
-    Check((await narrowClient.SubmitFeedbackAsync(new() { Rating = 4, RoundId = roundId, Liked = "Feedback without optional telemetry" })).Id != Guid.Empty, "No-telemetry feedback");
+    var narrowConfig = await narrowClient.GetFeedbackConfigAsync();
+    Check((await narrowClient.SubmitFeedbackAsync(new() { Rating = 4, FormRevision = narrowConfig.FormRevision, RoundId = roundId, Liked = "Feedback without optional telemetry" })).Id != Guid.Empty, "No-telemetry feedback");
     var narrowed = await narrowClient.TrySendReportedEventsAsync(new[] { new WorkflowEvent { Key = "session.started" } }, Guid.NewGuid());
     Check(!narrowed.Succeeded && narrowed.Error?.StatusCode is >= 400 and < 500, "Feedback-only telemetry denied");
 
@@ -89,14 +95,17 @@ try
         var crossSession = await otherBackend.TrySendVerifiedEventsAsync(session.SessionToken, observations, Guid.NewGuid());
         Check(!crossSession.Succeeded && crossSession.Error?.StatusCode is >= 400 and < 500, "Cross-owner session denied");
     }
+    var currentChecks = await CurrentApiChecks.RunAsync(options, session, backend, sessionRequest, args.Length == 2 ? args[1] : null);
 
     Console.WriteLine(JsonSerializer.Serialize(new
     {
         suite = "sdk_live_developer_workflow_contract", passed = true,
         verified_events = observations.Count, duplicate_events = repeatedEvents.Duplicates,
-        client_reported_events = 1, feedback_submissions = 3,
+        client_reported_events = args.Length == 2 ? 4 : 3, feedback_submissions = args.Length == 2 ? 5 : 4,
+        backend_credentials_created = false, session_contexts_created = args.Length == 2 ? 3 : 2,
         checks = new[] { "link", "session", "server_verified", "client_reported", "request_retries", "event_duplicates", "feedback_config", "configured_answers", "feedback_duplicates", "anonymous_feedback", "feedback_without_telemetry", "invalid_credential" },
-        cross_owner_checked = crossOwnerChecked
+        cross_owner_checked = crossOwnerChecked,
+        current_api_checks = currentChecks
     }));
     return 0;
 }

@@ -56,6 +56,10 @@ public sealed class WorkflowBackendClient : IDisposable
         if (session.SessionToken?.StartsWith("dw_session_", StringComparison.Ordinal) != true ||
             session.PlayerRef?.StartsWith("gp_", StringComparison.Ordinal) != true || session.ExpiresAt <= DateTimeOffset.UtcNow)
             throw new WorkflowException("invalid_response", 0, false);
+        if (session.GameplayEnabled && (string.IsNullOrWhiteSpace(session.ConsentGeneration) || session.ConsentGeneration.Length > 32 ||
+            session.ConsentGrantedAt == null || session.CollectionStartedAt == null || session.CollectionStartedAt < session.ConsentGrantedAt) ||
+            !session.GameplayEnabled && (session.ConsentGeneration != null || session.ConsentGrantedAt != null || session.CollectionStartedAt != null))
+            throw new WorkflowException("invalid_response", 0, false);
         return session;
     }
 
@@ -63,7 +67,7 @@ public sealed class WorkflowBackendClient : IDisposable
     public Task<WorkflowEventReceipt> SendVerifiedEventsAsync(
         string playerSessionToken, IEnumerable<WorkflowEvent> events, Guid requestId, CancellationToken cancellationToken = default)
     {
-        WorkflowValidation.Token(playerSessionToken, nameof(playerSessionToken));
+        WorkflowValidation.SessionToken(playerSessionToken, nameof(playerSessionToken));
         WorkflowValidation.RequestId(requestId);
         var batch = WorkflowValidation.Events(events);
         return WorkflowReceipts.EventsAsync(_transport.PostAsync<WorkflowEventReceipt>("api/connect/v2/events", new
@@ -85,10 +89,10 @@ public sealed class WorkflowBackendClient : IDisposable
         catch (WorkflowException error) { return new(null, error); }
     }
 
-    /// <summary>Optional bounded, in-memory delivery. Overflow/offline failures drop analytics without blocking gameplay.</summary>
+    /// <summary>Bounded process-local delivery tied to this backend and session. No persistent backlog or identity replacement is created.</summary>
     public WorkflowEventBuffer CreateEventBuffer(string playerSessionToken, int capacity = 128)
     {
-        WorkflowValidation.Token(playerSessionToken, nameof(playerSessionToken));
+        WorkflowValidation.SessionToken(playerSessionToken, nameof(playerSessionToken));
         return new((events, requestId, token) => TrySendVerifiedEventsAsync(playerSessionToken, events, requestId, token), capacity);
     }
 

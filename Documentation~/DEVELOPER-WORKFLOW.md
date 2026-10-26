@@ -136,12 +136,17 @@ var session = await backend.CreateSessionAsync(new WorkflowSessionRequest
 ```
 
 `POST /api/connect/v2/sessions` returns `session_token`, `player_ref`, `expires_at`,
-and `gameplay_enabled`. Indieable independently checks the player's stored
+and `gameplay_enabled`. Collection-enabled sessions also return opaque
+`ConsentGeneration`, `ConsentGrantedAt` and `CollectionStartedAt`; feedback-only
+sessions return null for those fields. Indieable independently checks the player's stored
 gameplay permission. Setting `TelemetryConsent = true` does not create that
 permission. Setting it to false narrows the session to non-telemetry features,
 including feedback. A personal playtest link alone grants no optional telemetry.
 Players change optional gameplay choices through their own management proof;
-withdrawal is checked server-side for later event ingestion.
+withdrawal is checked server-side for later event ingestion. Capture observations
+at or after both grant and collection start, with a truthful synchronized clock.
+An old session never acquires a later consent grant. Withdrawal/regrant requires
+a new session request ID and discarding old collection observations.
 
 Return only the short-lived session credential to the authenticated game client
 if client-reported observations or in-game feedback are needed. Reauthenticate
@@ -229,10 +234,13 @@ the exact serialized body, request ID, and event IDs. Keep original event IDs if
 your host retries later; do not regenerate IDs for an existing observation.
 
 `TrySend…` returns `WorkflowDelivery<T>` with a receipt or structured
-`WorkflowException` (`Code`, `StatusCode`, `Retryable`). Caller cancellation still
+`WorkflowException` (`Code`, `StatusCode`, `Retryable`, `RetryAfter`, `RetryAt`,
+`RetryAfterUnusable`, `InvalidatesCollectionContext`). Long minimum delays are
+returned without sleeping or retrying early; invalid delay headers stop automatic
+retry. Caller cancellation still
 propagates. Invalid SDK arguments report programming errors. Errors never include
 the credential or request body. The SDK creates no local identity, cookie,
-device fingerprint, file, or persistent event backlog.
+device fingerprint, file, or automatic persistent event backlog.
 
 After credential rotation or an organization/access change, do not replay a
 session-creation request ID under a new credential generation. Authenticate the
@@ -240,6 +248,12 @@ game account again and create a new operation/session. A 401/403 is a permanent
 denial for the current credential or session; the SDK does not retry it. Obtain
 new authorized credentials through the organization's supported workflow rather
 than falling back to an individual's entitlement or the old creator ID.
+
+`consent_context_expired` and `consent_required` invalidate the old collection
+queue. `event_outside_consent_context` discards that observation only. Never
+rewrite its timestamp, generate a replacement event ID, or move old observations
+to a newly authorized session. `stale_form` is feedback review, not an automatic
+retry or permission to silently replace the player's answers.
 
 For network-independent gameplay callbacks, use the optional bounded buffer:
 
@@ -251,12 +265,22 @@ await using var deliveryBuffer = backend.CreateEventBuffer(
 deliveryBuffer.TryEnqueue(new WorkflowEvent { Key = "session.started" });
 ```
 
-The buffer sends serially in the background with the same bounded transport
-policy. It holds at most the configured 1–1024 pending events plus one in flight,
-drops failures after the bounded attempt, persists nothing, and discards pending
-observations on disposal. Dispose the buffer before its client. It never creates
-a session or grants permission. Its optional `DeliveryCompleted` notification
-does not log automatically; subscriber exceptions cannot stop delivery.
+The buffer sends serially with the same bounded transport policy. Its configured
+1–1024 capacity includes an in-flight event. A transient failure pauses delivery
+and retains the exact pending operation; `RetryPending()` resumes only after
+`RetryAt` and never changes its body, event ID, request ID or capture time. There
+is no unbounded automatic retry scheduler. A permanent event error discards that
+event; a consent or authorization invalidation clears and stops the entire queue.
+Call `InvalidateCollection()` on logout or known withdrawal. An already committed
+request cannot be recalled. Feedback through the client remains separate.
+
+This buffer is process-local: disposal or a process restart discards pending
+events. Durable restart storage is not implemented. A host that owns a separate
+backlog must retain its exact session, trust, event IDs, request IDs and original
+capture times; never rebind old observations to a new login or consent context.
+Dispose buffers before clients. `DeliveryCompleted` never logs automatically;
+subscriber exceptions cannot stop delivery. Real engine/export behavior remains
+unverified: these are internal .NET 8 contracts, not a published engine adapter.
 
 An injected `HttpClient` remains host-owned. Its handler must disable automatic
 redirects so bearer credentials are never redirected. The SDK-owned handler has
@@ -271,7 +295,7 @@ duplicate a developer's questions in game code:
 ```csharp
 var form = await client.GetFeedbackConfigAsync(cancellationToken);
 // Render form.Fields and form.SurveyQuestions using your engine's own UI.
-// The form also supplies RoundId, BuildLabel, Focus, and AnonymousSupported.
+// The form also supplies FormRevision, FeedbackExpiresAt, RoundId and AnonymousSupported.
 ```
 
 `GET /api/connect/v2/feedback/config` uses the session bearer and returns the
@@ -285,6 +309,7 @@ var feedbackRequest = new WorkflowFeedbackRequest
 {
     RequestId = Guid.NewGuid(),
     Rating = 4,
+    FormRevision = form.FormRevision,
     Liked = "The opening goal was clear.",
     Confused = "I could not find the return route.",
     RoundId = form.RoundId,
@@ -305,6 +330,15 @@ the feedback anonymous; Indieable does not attach it to the player's history or
 manufacture a signup or marketing consent. The session or explicit round supplies
 game/round context and is validated against that game. A feedback-only session
 works while optional gameplay remains off. Ordinary web feedback needs no SDK.
+
+The SDK requires the exact fetched `FormRevision` for new submissions. The HTTP
+server retains an older unversioned compatibility path, but this client does not
+silently use it. A `stale_form` conflict keeps the draft: reload the form, let the
+player review the changes, then submit with a new request ID and its new revision.
+An exact already accepted request retries with the original revision/body/ID.
+Ended rounds accept feedback for seven days; use `FeedbackExpiresAt` rather than
+inventing a local deadline. This contract covers text feedback and configured
+answers, not attachments, bug uploads, distribution or invitation responses.
 
 ## Local validation
 

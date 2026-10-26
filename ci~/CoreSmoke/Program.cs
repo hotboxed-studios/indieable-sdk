@@ -13,6 +13,7 @@ internal static class Program
         {
             await RunAsync();
             await WorkflowSmoke.RunAsync();
+            await WorkflowReliabilitySmoke.RunAsync();
             Console.WriteLine("Indieable generic C# and event-bus smoke passed.");
             return 0;
         }

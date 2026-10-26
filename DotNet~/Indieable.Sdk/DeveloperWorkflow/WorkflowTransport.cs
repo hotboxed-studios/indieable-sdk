@@ -59,6 +59,7 @@ internal sealed class WorkflowTransport : IDisposable
             throw new ArgumentException($"The request exceeds the {MaxRequestBytes}-byte limit.", nameof(body));
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(_timeout);
+        var expiresAt = DateTimeOffset.UtcNow + _timeout;
         try
         {
             for (var attempt = 0; ; attempt++)
@@ -92,12 +93,13 @@ internal sealed class WorkflowTransport : IDisposable
                     var json = await ReadBoundedAsync(response.Content, deadline.Token).ConfigureAwait(false);
                     if (!response.IsSuccessStatusCode)
                     {
-                        var error = ParseError(response.StatusCode, json);
+                        var timing = RetryTiming(response.Headers, DateTimeOffset.UtcNow);
+                        var error = ParseError(response.StatusCode, json, timing);
                         // A long Retry-After belongs to the host's later retry policy, not this short gameplay-safe deadline.
                         // Never shorten the server's requested backoff and retry early.
-                        var serverDelay = response.Headers.RetryAfter?.Delta ?? (response.Headers.RetryAfter?.Date - DateTimeOffset.UtcNow);
-                        if (!error.Retryable || attempt >= _maxRetries || serverDelay > TimeSpan.FromSeconds(2)) throw error;
-                        await DelayAsync(attempt, response.Headers.RetryAfter, deadline.Token).ConfigureAwait(false);
+                        if (!error.Retryable || attempt >= _maxRetries || timing.Delay > TimeSpan.FromSeconds(2) ||
+                            timing.Delay >= expiresAt - DateTimeOffset.UtcNow) throw error;
+                        await DelayAsync(attempt, timing.Delay, deadline.Token).ConfigureAwait(false);
                         continue;
                     }
                     try
@@ -116,11 +118,23 @@ internal sealed class WorkflowTransport : IDisposable
         catch (IOException) { throw new WorkflowException("network_error", 0, true); }
     }
 
-    private async Task DelayAsync(int attempt, RetryConditionHeaderValue? retryAfter, CancellationToken token)
+    private async Task DelayAsync(int attempt, TimeSpan? suggested, CancellationToken token)
     {
-        var suggested = retryAfter?.Delta ?? (retryAfter?.Date - DateTimeOffset.UtcNow);
         var milliseconds = suggested?.TotalMilliseconds ?? _retryDelay.TotalMilliseconds * Math.Pow(2, attempt);
         await Task.Delay(TimeSpan.FromMilliseconds(Math.Clamp(milliseconds, 0, 2000)), token).ConfigureAwait(false);
+    }
+
+    private static (TimeSpan? Delay, DateTimeOffset? At, bool Unusable) RetryTiming(HttpResponseHeaders headers, DateTimeOffset now)
+    {
+        if (!headers.TryGetValues("Retry-After", out var values)) return (null, null, false);
+        var raw = values.Take(2).ToArray();
+        if (raw.Length != 1 || raw[0].Length > 200 || !RetryConditionHeaderValue.TryParse(raw[0], out var value))
+            return (null, null, true);
+        var delay = value.Delta ?? value.Date - now;
+        if (delay == null) return (null, null, true);
+        if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
+        try { return (delay, now + delay.Value, false); }
+        catch (ArgumentOutOfRangeException) { return (null, null, true); }
     }
 
     private static async Task<string> ReadBoundedAsync(HttpContent content, CancellationToken token)
@@ -138,7 +152,8 @@ internal sealed class WorkflowTransport : IDisposable
         return Encoding.UTF8.GetString(destination.GetBuffer(), 0, (int)destination.Length);
     }
 
-    private static WorkflowException ParseError(HttpStatusCode status, string json)
+    private static WorkflowException ParseError(HttpStatusCode status, string json,
+        (TimeSpan? Delay, DateTimeOffset? At, bool Unusable) timing)
     {
         var code = "request_failed";
         var retryable = status == HttpStatusCode.TooManyRequests || (int)status >= 500;
@@ -155,7 +170,7 @@ internal sealed class WorkflowTransport : IDisposable
             }
         }
         catch (JsonException) { }
-        return new WorkflowException(code, (int)status, retryable);
+        return new WorkflowException(code, (int)status, retryable && !timing.Unusable, timing.Delay, timing.At, timing.Unusable);
     }
 
     public void Dispose() { if (_ownsClient) _client.Dispose(); }
@@ -163,6 +178,14 @@ internal sealed class WorkflowTransport : IDisposable
 
 internal static class WorkflowValidation
 {
+    internal static bool FormRevision(string? value) => value != null && Regex.IsMatch(value, "^[a-f0-9]{64}$");
+    internal static string SessionToken(string value, string name)
+    {
+        Token(value, name);
+        if (!value.StartsWith("dw_session_", StringComparison.Ordinal))
+            throw new ArgumentException("A limited player session credential is required.", name);
+        return value;
+    }
     internal static string Token(string value, string name, int limit = 200)
     {
         if (string.IsNullOrWhiteSpace(value) || value.Length > limit || value.Any(char.IsWhiteSpace) || value.Any(char.IsControl))
